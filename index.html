@@ -5,311 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#0b0f19">
+  <meta name="theme-color" content="#0b1120">
   <title>RTU5024 Ухаалаг Реле - Админ Консол</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
-    body { font-family: 'Inter', sans-serif; background-color: #0b0f19; color: #e2e8f0; }
-    .mono { font-family: 'JetBrains Mono', monospace; }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0f172a; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-  </style>
-</head>
-<body class="min-h-screen flex flex-col justify-between selection:bg-blue-600 selection:text-white">
-
-  <!-- ПИН ТҮГЖЭЭНИЙ ДЭЛГЭЦ -->
-  <div id="lockScreen" class="fixed inset-0 bg-[#0b0f19] z-50 hidden flex-col items-center justify-center p-4">
-    <div class="bg-[#111827] border border-slate-800 rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl">
-      <div class="w-16 h-16 bg-blue-600/20 text-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">
-        <i class="fa-solid fa-shield-halved"></i>
-      </div>
-      <h2 class="text-xl font-bold text-white mb-1">Админ Консол Түгжээтэй</h2>
-      <p class="text-xs text-slate-400 mb-6">Нэвтрэхийн тулд ПИН кодоо оруулна уу</p>
-      <input type="password" id="unlockPinInput" maxlength="8" placeholder="••••" class="w-full text-center text-2xl tracking-widest mono bg-[#1e293b] border border-slate-700 rounded-xl py-3 text-white focus:border-blue-500 outline-none mb-4">
-      <button onclick="unlockApp()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition">Нэвтрэх</button>
-      <p id="lockError" class="text-rose-400 text-xs mt-3 hidden">ПИН код буруу байна!</p>
-    </div>
-  </div>
-
-  <!-- ҮНДСЭН АГУУЛГА -->
-  <div class="max-w-6xl w-full mx-auto px-4 py-6 space-y-6">
-    
-    <!-- ТОЛГОЙ ХЭСЭГ -->
-    <header class="bg-[#111827] border border-slate-800/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-lg">
-      <div class="flex items-center gap-3.5">
-        <div class="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center text-white text-lg shadow-lg shadow-blue-600/30">
-          <i class="fa-solid fa-tower-broadcast"></i>
-        </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-lg sm:text-xl font-bold text-white">RTU5024 Ухаалаг Реле</h1>
-            <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[11px] font-semibold px-2 py-0.5 rounded-full">● v2.0 Pro</span>
-          </div>
-          <p class="text-xs text-slate-400 mt-0.5">GSM Хаалга & Зайнаас удирдах системийн Админ консол</p>
-        </div>
-      </div>
-      <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
-        <a id="topCallBtn" href="tel:0097699112233" class="flex-1 sm:flex-initial justify-center bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-lg shadow-emerald-600/20 transition">
-          <i class="fa-solid fa-phone"></i> Хаалга нээх (Дуудлага)
-        </a>
-        <button onclick="openSimulator()" class="bg-[#1e293b] hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs sm:text-sm font-medium px-4 py-2.5 rounded-xl flex items-center gap-2 transition">
-          <i class="fa-solid fa-play text-blue-400"></i> Симулятор
-        </button>
-      </div>
-    </header>
-
-    <!-- СТАТИСТИК 4 КАРТ -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="bg-[#111827] border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
-        <div class="flex justify-between items-center text-xs text-slate-400 mb-2">
-          <span>Төхөөрөмжийн SIM</span>
-          <i class="fa-solid fa-sim-card text-blue-400"></i>
-        </div>
-        <div id="cardSim" class="text-lg font-bold text-white mono tracking-tight">0097699112233</div>
-        <div id="cardGateName" class="text-[11px] text-slate-400 mt-2 flex items-center gap-1.5">
-          <i class="fa-solid fa-gear text-slate-500"></i> Төв хашааны гүйдэг хаалга
-        </div>
-      </div>
-
-      <div class="bg-[#111827] border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
-        <div class="flex justify-between items-center text-xs text-slate-400 mb-2">
-          <span>Нууц үг & Хамгаалалт</span>
-          <i class="fa-solid fa-lock text-indigo-400"></i>
-        </div>
-        <div class="flex items-center gap-2">
-          <span id="cardPwd" class="text-lg font-bold text-white mono tracking-widest">1234</span>
-          <span id="cardModeBadge" class="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-semibold px-2 py-0.5 rounded">AUT ГОРИМ</span>
-        </div>
-        <div id="cardFwType" class="text-[11px] text-slate-400 mt-2">Стандарт RTU5024 команд</div>
-      </div>
-
-      <div class="bg-[#111827] border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
-        <div class="flex justify-between items-center text-xs text-slate-400 mb-2">
-          <span>Реле ажиллах хугацаа (GOT)</span>
-          <i class="fa-solid fa-stopwatch text-amber-400"></i>
-        </div>
-        <div class="flex items-baseline gap-2">
-          <span id="cardGotCode" class="text-lg font-bold text-white mono">000</span>
-          <span id="cardGotLabel" class="text-xs text-amber-400 font-medium">0.5 сек (Импульс)</span>
-        </div>
-        <div class="text-[11px] text-slate-400 mt-2">Хаалга онгойх командын контакт</div>
-      </div>
-
-      <div class="bg-[#111827] border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
-        <div class="flex justify-between items-center text-xs text-slate-400 mb-2">
-          <span>Бүртгэлтэй Хэрэглэгчид</span>
-          <i class="fa-solid fa-users text-emerald-400"></i>
-        </div>
-        <div class="flex items-baseline justify-between">
-          <div><span id="cardUserCount" class="text-lg font-bold text-white">3</span> <span class="text-xs text-slate-400">/ 200 Слот</span></div>
-          <span id="cardAdminCount" class="text-[11px] text-amber-400 font-medium">👑 1 Админ</span>
-        </div>
-        <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2.5 overflow-hidden">
-          <div id="cardProgressBar" class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: 1.5%"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ҮНДСЭН ЦЭС (ТАБ) -->
-    <div class="bg-[#111827] border border-slate-800/80 rounded-2xl shadow-xl overflow-hidden">
-      <div class="border-b border-slate-800 px-4 flex flex-wrap gap-2">
-        <button onclick="switchTab('users')" id="tabBtn-users" class="py-3.5 px-4 text-xs sm:text-sm font-semibold border-b-2 border-blue-500 text-blue-400 flex items-center gap-2 transition">
-          <i class="fa-solid fa-user-group"></i> 200 Хэрэглэгчийн Бүртгэл
-          <span id="tabBadgeCount" class="bg-blue-600/20 text-blue-400 text-xs px-2 py-0.5 rounded-full">3</span>
-        </button>
-        <button onclick="switchTab('commands')" id="tabBtn-commands" class="py-3.5 px-4 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
-          <i class="fa-solid fa-terminal"></i> 22 SMS Команд Үүсгэгч
-          <span class="bg-slate-800 text-slate-400 text-xs px-2 py-0.5 rounded-full">22</span>
-        </button>
-        <button onclick="switchTab('settings')" id="tabBtn-settings" class="py-3.5 px-4 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
-          <i class="fa-solid fa-sliders"></i> Төхөөрөмжийн Тохиргоо
-        </button>
-      </div>
-
-      <!-- ТАБ 1: 200 ХЭРЭГЛЭГЧИЙН БҮРТГЭЛ -->
-      <div id="tab-users" class="p-4 sm:p-6 space-y-4">
-        <div class="flex flex-col md:flex-row justify-between gap-3">
-          <div class="flex flex-1 flex-col sm:flex-row gap-2.5">
-            <div class="relative flex-1">
-              <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-500 text-xs"></i>
-              <input type="text" id="searchInput" oninput="renderUsers()" placeholder="Нэр, дугаар, слот хайх..." class="w-full bg-[#1e293b]/70 border border-slate-700/80 rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm text-white focus:border-blue-500 outline-none">
-            </div>
-            <select id="filterSelect" onchange="renderUsers()" class="bg-[#1e293b]/70 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-slate-200 outline-none focus:border-blue-500">
-              <option value="all">Бүх хэрэглэгч</option>
-              <option value="admin">👑 Админ (001-005)</option>
-              <option value="permanent">● Байнгын эрхтэй</option>
-              <option value="temporary">● Цагийн хязгаартай</option>
-              <option value="expired">⚠️ Хугацаа дууссан</option>
-            </select>
-          </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="importCSV(event)">
-            <button onclick="document.getElementById('csvFileInput').click()" class="bg-[#1e293b] hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition" title="CSV файлаас хэрэглэгч оруулах">
-              <i class="fa-solid fa-file-import text-emerald-400"></i> Импорт
-            </button>
-            <button onclick="exportCSV()" class="bg-[#1e293b] hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition" title="Excel CSV файл татах">
-              <i class="fa-solid fa-file-csv text-blue-400"></i> CSV Татах
-            </button>
-            <button onclick="openUserModal()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-lg shadow-blue-600/20 transition">
-              <i class="fa-solid fa-user-plus"></i> Хэрэглэгч Нэмэх
-            </button>
-          </div>
-        </div>
-
-        <div class="overflow-x-auto border border-slate-800 rounded-xl">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="border-b border-slate-800 bg-[#0f172a]/60 text-[11px] text-slate-400 uppercase">
-                <th class="py-3 px-4">Слот</th>
-                <th class="py-3 px-4">Нэр / Тайлбар</th>
-                <th class="py-3 px-4">Утасны дугаар</th>
-                <th class="py-3 px-4">Хандалтын төрөл</th>
-                <th class="py-3 px-4">SMS Команд</th>
-                <th class="py-3 px-4 text-right">Үйлдэл</th>
-              </tr>
-            </thead>
-            <tbody id="userTableBody" class="divide-y divide-slate-800/60 text-xs sm:text-sm"></tbody>
-          </table>
-        </div>
-
-        <div class="flex flex-col sm:flex-row justify-between items-center text-[11px] text-slate-400 pt-2 gap-2">
-          <div class="flex flex-wrap items-center gap-4">
-            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400"></span> 001-005: Админ хэрэглэгч</span>
-            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Байнгын хэрэглэгч</span>
-            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-blue-400"></span> Хугацаат хэрэглэгч</span>
-          </div>
-          <div>Хамгийн дээд хязгаар: <strong class="text-slate-200">200 хэрэглэгчийн санах ой</strong></div>
-        </div>
-      </div>
-
-      <!-- ТАБ 2: 22 SMS КОМАНД ҮҮСГЭГЧ -->
-      <div id="tab-commands" class="p-4 sm:p-6 hidden space-y-6">
-        <div class="bg-blue-950/30 border border-blue-500/20 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <div class="text-xs text-blue-200">
-            <i class="fa-solid fa-circle-info text-blue-400 mr-1"></i>
-            Бүх командууд таны тохируулсан <strong>Нууц үг</strong> болон <strong>SIM дугаарт</strong> автоматаар таарч үүссэн. Шууд хуулах эсвэл утсаараа илгээх товчийг дарна уу.
-          </div>
-          <button onclick="sendClockSyncNow()" class="shrink-0 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-2 rounded-lg flex items-center gap-1.5 transition">
-            <i class="fa-solid fa-clock"></i> Яг одоогийн цагаар синк хийх
-          </button>
-        </div>
-
-        <div id="commandsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3.5"></div>
-      </div>
-
-      <!-- ТАБ 3: ТӨХӨӨРӨМЖИЙН ТОХИРГОО -->
-      <div id="tab-settings" class="p-4 sm:p-6 hidden space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          <!-- Үндсэн параметр -->
-          <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-5 space-y-4">
-            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <i class="fa-solid fa-microchip text-blue-400"></i> Төхөөрөмжийн үндсэн тохиргоо
-            </h3>
-            <div>
-              <label class="block text-xs text-slate-400 mb-1">Хаалга / Объектын нэр</label>
-              <input type="text" id="setGateName" class="w-full bg-[#1e293b] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500">
-            </div>
-            <div>
-              <label class="block text-xs text-slate-400 mb-1">RTU5024 доторх SIM картын дугаар</label>
-              <input type="text" id="setSim" class="w-full bg-[#1e293b] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white mono outline-none focus:border-blue-500">
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-xs text-slate-400 mb-1">Төхөөрөмжийн нууц үг (4 орон)</label>
-                <input type="text" id="setPwd" maxlength="4" class="w-full bg-[#1e293b] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white mono outline-none focus:border-blue-500">
-              </div>
-              <div>
-                <label class="block text-xs text-slate-400 mb-1">Хандалтын горим</label>
-                <select id="setAuthMode" class="w-full bg-[#1e293b] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500">
-                  <option value="AUT">AUT (Зөвхөн бүртгэлтэй)</option>
-                  <option value="ALL">ALL (Бүх дугаарт нээлттэй)</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label class="block text-xs text-slate-400 mb-1">Реле залгаатай байх хугацаа (GOT секунд)</label>
-              <select id="setGot" class="w-full bg-[#1e293b] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500">
-                <option value="000">000 - 0.5 сек импульс (Автомат хаалганд)</option>
-                <option value="005">005 - 5 секунд</option>
-                <option value="015">015 - 15 секунд</option>
-                <option value="030">030 - 30 секунд</option>
-                <option value="999">999 - Дараагийн дуудлага хүртэл ON</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Дэвшилтэт ба Нууцлалын тохиргоо -->
-          <div class="bg-[#0f172a] border border-slate-800 rounded-xl p-5 space-y-4">
-            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> Ухаалаг формат & Хамгаалалт
-            </h3>
-            <div>
-              <label class="block text-xs text-slate-400 mb-1">Утасны дугаарын угтвар формат</label>
-              <select id="setPrefixMode" class="w-full bg-[#1e293b] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500">
-                <option value="00976">Автоматаар 00976 залгах (Зөвлөмж)</option>
-                <option value="+976">Автоматаар +976 залгах</option>
-                <option value="none">Угтваргүй (Шууд 8 оронтойгоор)</option>
-              </select>
-              <p class="text-[11px] text-slate-500 mt-1">8 оронтой дугаар бичихэд SMS команд руу хэрхэн хөрвүүлэхийг шийднэ.</p>
-            </div>
-
-            <div>
-              <label class="block text-xs text-slate-400 mb-1">Төхөөрөмжийн Програм (Firmware төрөл)</label>
-              <select id="setFwType" class="w-full bg-[#1e293b] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500">
-                <option value="standard">Стандарт RTU5024 (Жишээ: 1234CC)</option>
-                <option value="callny">Callny / G202 Клон (# тусгаарлагчтай: 1234#ON#)</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block text-xs text-slate-400 mb-1">Веб апп түгжих ПИН код (Хоосон орхивол түгжихгүй)</label>
-              <input type="password" id="setAppPin" placeholder="Нэвтрэх ПИН код тохируулах..." class="w-full bg-[#1e293b] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white mono outline-none focus:border-blue-500">
-            </div>
-
-            <div class="pt-2 flex flex-wrap gap-2">
-              <button onclick="saveSettings()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition shadow-lg shadow-blue-600/20">
-                <i class="fa-solid fa-floppy-disk mr-1"></i> Тохиргоо Хадгалах
-              </button>
-              <button onclick="resetAllData()" class="bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-800/60 font-medium py-2.5 px-4 rounded-xl text-xs transition">
-                Өгөгдөл איפוס
-              </button>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ХӨЛ ХЭСЭГ -->
-  <footer class="max-w-6xl w-full mx-auto px-4 py-6 border-t border-slate-800/60 text-[11px] text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-2">
-    <div>RTU5024 GSM Gate & Relay Controller — Монгол хэл дээрх Админ удирдлагын систем</div>
-    <div>Бүх өгөгдөл таны хөтчийн LocalStorage санах ойд аюулгүй хадгалагдана.</div>
-  </footer>
-
-  <!-- МОДАЛ: ХЭРЭГЛЭГЧ НЭМЭХ / ЗАСАХ -->
-  <div id="userModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-40 hidden items-center justify-center p-4">
-    <divДээр дурдсан бүх 8 сайжруулалтыг (`001-005` Админ тэмдэглэгээ, сул слот автоматаар олох, давхардал шалгах, Календарь сонгогч, CSV/JSON Импорт/Экспорт, iOS/Android `sms:` линк таних, Стандарт болон `#` тусгаарлагчтай Callny горим сэлгэх, ПИН түгжээ) бүрэн багтаасан шинэчлэгдсэн `index.html` код бэлэн боллоо.
-
-Доорх кодыг бүтнээр нь хуулж аваад GitHub дээрх `index.html` файлынхаа доторх кодыг дарж хадгалаарай (**Edit file -> Paste -> Commit changes**):
-
-```html
-<!DOCTYPE html>
-<html lang="mn" class="dark">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#0b1120">
-  <title>RTU5024 Ухаалаг Реле - Админ Консол</title>
-  <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
-  <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css)">
   <style>
     body { background-color: #0b1120; color: #e2e8f0; font-family: system-ui, -apple-system, sans-serif; }
     .card { background-color: #111827; border: 1px solid #1e293b; }
@@ -323,7 +22,7 @@
 <body class="min-h-screen flex flex-col justify-between">
 
   <!-- ПИН Түгжээний Модал -->
-  <div id="pinLockModal" class="fixed inset-0 bg-slate-950/95 z-50 hidden flex items-center justify-center p-4">
+  <div id="pinLockModal" class="fixed inset-0 bg-slate-950/95 z-50 hidden items-center justify-center p-4">
     <div class="card rounded-2xl p-6 max-w-xs w-full text-center space-y-4 shadow-2xl">
       <div class="w-12 h-12 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center mx-auto text-xl">
         <i class="fa-solid fa-shield-halved"></i>
@@ -331,7 +30,7 @@
       <h3 class="text-lg font-bold text-white">Админ ПИН Код</h3>
       <p class="text-xs text-slate-400">Систем рүү нэвтрэх 4 оронтой ПИН кодоо оруулна уу.</p>
       <input type="password" id="pinInput" maxlength="4" placeholder="••••" class="input-dark w-full text-center text-2xl tracking-widest py-2.5 rounded-xl">
-      <button onclick="unlockApp()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl transition">Нэвтрэх</button>
+      <button type="button" onclick="unlockApp()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl transition">Нэвтрэх</button>
     </div>
   </div>
 
@@ -347,7 +46,7 @@
         <div>
           <div class="flex items-center gap-2">
             <h1 class="text-xl font-bold text-white">RTU5024 Ухаалаг Реле</h1>
-            <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-2 py-0.5 rounded-full font-medium">● v2.0 Pro</span>
+            <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-2 py-0.5 rounded-full font-medium">● v2.1 Pro</span>
           </div>
           <p class="text-xs text-slate-400 mt-0.5">GSM Хаалга & Зайнаас удирдах системийн Админ консол</p>
         </div>
@@ -356,19 +55,19 @@
         <a id="headerCallBtn" href="tel:0097699112233" class="flex-1 sm:flex-none justify-center bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-lg shadow-emerald-600/20 transition">
           <i class="fa-solid fa-phone"></i> Хаалга нээх (Дуудлага)
         </a>
-        <button onclick="toggleSimulator()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-sm font-medium px-4 py-2.5 rounded-xl flex items-center gap-2 transition">
+        <button type="button" onclick="toggleSimulator()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-sm font-medium px-4 py-2.5 rounded-xl flex items-center gap-2 transition">
           <i class="fa-solid fa-play text-blue-400"></i> Симулятор
         </button>
       </div>
     </header>
 
-    <!-- Симулятор самбар (Нуугдмал) -->
+    <!-- Симулятор самбар -->
     <div id="simulatorPanel" class="card rounded-2xl p-5 hidden space-y-4 border-blue-500/30 bg-slate-900/90">
       <div class="flex justify-between items-center">
         <h3 class="text-sm font-bold text-blue-400 flex items-center gap-2">
           <i class="fa-solid fa-microchip"></i> Бодит Ажиллагааны Симулятор
         </h3>
-        <button onclick="toggleSimulator()" class="text-slate-400 hover:text-white text-sm"><i class="fa-solid fa-xmark"></i></button>
+        <button type="button" onclick="toggleSimulator()" class="text-slate-400 hover:text-white text-sm"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
         <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
@@ -386,13 +85,13 @@
           <div id="simTimerText" class="text-xs text-slate-400 mt-1">Хүлээлгийн горимд...</div>
         </div>
         <div class="flex gap-2">
-          <button onclick="runSimulation('call')" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-3 rounded-xl transition">
+          <button type="button" onclick="runSimulation('call')" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-3 rounded-xl transition">
             <i class="fa-solid fa-phone-volume block mb-1 text-base"></i> Дуудлага турших
           </button>
-          <button onclick="runSimulation('sms_on')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-3 rounded-xl transition">
+          <button type="button" onclick="runSimulation('sms_on')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-3 rounded-xl transition">
             <i class="fa-solid fa-bolt block mb-1 text-base"></i> ON Команд
           </button>
-          <button onclick="runSimulation('sms_off')" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-3 rounded-xl transition">
+          <button type="button" onclick="runSimulation('sms_off')" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-3 rounded-xl transition">
             <i class="fa-solid fa-power-off block mb-1 text-base"></i> OFF Команд
           </button>
         </div>
@@ -401,7 +100,7 @@
 
     <!-- Дээд 4 Статус Карт -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="card rounded-2xl p-4 flex flex-col justify-between">
+      <div class="card rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:border-slate-700 transition" onclick="switchTab('settings')">
         <div class="flex justify-between items-start text-xs text-slate-400">
           <span>Төхөөрөмжийн SIM</span>
           <i class="fa-solid fa-sim-card text-blue-400"></i>
@@ -410,7 +109,7 @@
         <div id="statGateName" class="text-xs text-slate-400 truncate"><i class="fa-solid fa-location-dot mr-1"></i> Төв хашааны гүйдэг хаалга</div>
       </div>
 
-      <div class="card rounded-2xl p-4 flex flex-col justify-between">
+      <div class="card rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:border-slate-700 transition" onclick="switchTab('settings')">
         <div class="flex justify-between items-start text-xs text-slate-400">
           <span>Нууц үг & Хамгаалалт</span>
           <i class="fa-solid fa-lock text-indigo-400"></i>
@@ -422,7 +121,7 @@
         <div id="statFirmware" class="text-xs text-slate-400">Стандарт RTU5024 команд</div>
       </div>
 
-      <div class="card rounded-2xl p-4 flex flex-col justify-between">
+      <div class="card rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:border-slate-700 transition" onclick="switchTab('settings')">
         <div class="flex justify-between items-start text-xs text-slate-400">
           <span>Реле ажиллах хугацаа (GOT)</span>
           <i class="fa-solid fa-stopwatch text-amber-400"></i>
@@ -434,7 +133,7 @@
         <div class="text-xs text-slate-400">Хаалга онгойх командын контакт</div>
       </div>
 
-      <div class="card rounded-2xl p-4 flex flex-col justify-between">
+      <div class="card rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:border-slate-700 transition" onclick="switchTab('users')">
         <div class="flex justify-between items-start text-xs text-slate-400">
           <span>Бүртгэлтэй Хэрэглэгчид</span>
           <i class="fa-solid fa-users text-emerald-400"></i>
@@ -453,13 +152,13 @@
     <div class="card rounded-2xl overflow-hidden shadow-xl">
       <!-- Таб Товчлуурууд -->
       <div class="flex border-b border-slate-800 bg-slate-900/50 overflow-x-auto">
-        <button onclick="switchTab('users')" id="tabBtn-users" class="px-5 py-3.5 text-xs sm:text-sm font-semibold border-b-2 border-blue-500 text-blue-400 flex items-center gap-2 whitespace-nowrap">
+        <button type="button" onclick="switchTab('users')" id="tabBtn-users" class="px-5 py-3.5 text-xs sm:text-sm font-semibold border-b-2 border-blue-500 text-blue-400 flex items-center gap-2 whitespace-nowrap cursor-pointer">
           <i class="fa-solid fa-users"></i> 200 Хэрэглэгчийн Бүртгэл
         </button>
-        <button onclick="switchTab('commands')" id="tabBtn-commands" class="px-5 py-3.5 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 whitespace-nowrap">
+        <button type="button" onclick="switchTab('commands')" id="tabBtn-commands" class="px-5 py-3.5 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 whitespace-nowrap cursor-pointer">
           <i class="fa-solid fa-terminal"></i> 22 SMS Команд Үүсгэгч <span class="bg-slate-800 text-slate-300 text-[10px] px-1.5 py-0.5 rounded-full">22</span>
         </button>
-        <button onclick="switchTab('settings')" id="tabBtn-settings" class="px-5 py-3.5 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 whitespace-nowrap">
+        <button type="button" onclick="switchTab('settings')" id="tabBtn-settings" class="px-5 py-3.5 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 whitespace-nowrap cursor-pointer">
           <i class="fa-solid fa-sliders"></i> Төхөөрөмжийн Тохиргоо
         </button>
       </div>
@@ -482,13 +181,13 @@
           </div>
           <div class="flex flex-wrap gap-2">
             <input type="file" id="csvFileInput" accept=".csv,.json" class="hidden" onchange="importData(event)">
-            <button onclick="document.getElementById('csvFileInput').click()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-2 rounded-xl flex items-center gap-1.5 transition">
+            <button type="button" onclick="document.getElementById('csvFileInput').click()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-2 rounded-xl flex items-center gap-1.5 transition">
               <i class="fa-solid fa-file-import text-blue-400"></i> Импорт
             </button>
-            <button onclick="exportCSV()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-2 rounded-xl flex items-center gap-1.5 transition">
+            <button type="button" onclick="exportCSV()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-2 rounded-xl flex items-center gap-1.5 transition">
               <i class="fa-solid fa-file-csv text-emerald-400"></i> CSV Татах
             </button>
-            <button onclick="openUserModal()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-lg shadow-blue-600/20 transition">
+            <button type="button" onclick="openUserModal()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-lg shadow-blue-600/20 transition">
               <i class="fa-solid fa-user-plus"></i> Хэрэглэгч Нэмэх
             </button>
           </div>
@@ -544,7 +243,7 @@
             </div>
             <div>
               <label class="block text-xs text-slate-400 mb-1">Төхөөрөмжийн SIM картын дугаар</label>
-              <input type="text" id="setSim" class="input-dark w-full px-3 py-2 rounded-xl text-sm">
+              <input type="text" id="setSim" class="input-dark w-full px-3 py-2 rounded-xl text-sm font-mono">
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
@@ -594,10 +293,10 @@
               <input type="password" id="setAppPin" maxlength="4" placeholder="Жишээ: 0815" class="input-dark w-full px-3 py-2 rounded-xl text-sm">
             </div>
             <div class="pt-3 flex gap-3">
-              <button onclick="saveSettings()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-sm shadow-lg shadow-blue-600/20 transition">
+              <button type="button" onclick="saveSettings()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-sm shadow-lg shadow-blue-600/20 transition">
                 <i class="fa-solid fa-floppy-disk mr-1"></i> Тохиргоо Хадгалах
               </button>
-              <button onclick="resetAllData()" class="bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-800/50 px-4 py-2.5 rounded-xl text-xs font-semibold transition">
+              <button type="button" onclick="resetAllData()" class="bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-800/50 px-4 py-2.5 rounded-xl text-xs font-semibold transition">
                 Анхны төлөвт оруулах
               </button>
             </div>
@@ -608,11 +307,11 @@
   </div>
 
   <!-- Хэрэглэгч Нэмэх / Засах Модал -->
-  <div id="userModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 hidden flex items-center justify-center p-4">
+  <div id="userModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 hidden items-center justify-center p-4">
     <div class="card rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border-slate-700">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <h3 id="modalTitle" class="text-base font-bold text-white">Хэрэглэгч нэмэх</h3>
-        <button onclick="closeUserModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+        <button type="button" onclick="closeUserModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
       <div class="space-y-3">
@@ -657,10 +356,10 @@
       </div>
 
       <div class="flex gap-2 pt-3 border-t border-slate-800">
-        <button onclick="saveUser(false)" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2.5 rounded-xl text-xs transition">
+        <button type="button" onclick="saveUser(false)" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2.5 rounded-xl text-xs transition">
           Зөвхөн хадгалах
         </button>
-        <button onclick="saveUser(true)" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-blue-600/20 transition">
+        <button type="button" onclick="saveUser(true)" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-blue-600/20 transition">
           <i class="fa-solid fa-paper-plane"></i> Хадгалах & SMS Илгээх
         </button>
       </div>
@@ -677,7 +376,6 @@
   <div id="toast" class="fixed bottom-5 right-5 bg-emerald-600 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-2xl hidden z-50"></div>
 
   <script>
-    // Анхны тохиргоо ба Өгөгдөл
     const defaultSettings = {
       gateName: 'Төв хашааны гүйдэг хаалга',
       sim: '0097699112233',
@@ -695,11 +393,19 @@
       { slot: '006', name: 'Түр засварчин Сугар', phone: '0097688114455', type: 'temp', start: '2611080800', end: '2611101800' }
     ];
 
-    let settings = JSON.parse(localStorage.getItem('rtu5024_settings')) || defaultSettings;
-    let users = JSON.parse(localStorage.getItem('rtu5024_users')) || defaultUsers;
+    let settings = defaultSettings;
+    let users = defaultUsers;
     let editingSlot = null;
 
-    // Туслах функцууд
+    try {
+      const savedSet = localStorage.getItem('rtu5024_settings');
+      if (savedSet) settings = { ...defaultSettings, ...JSON.parse(savedSet) };
+      const savedUsr = localStorage.getItem('rtu5024_users');
+      if (savedUsr) users = JSON.parse(savedUsr);
+    } catch (e) {
+      console.error(e);
+    }
+
     function showToast(msg) {
       const t = document.getElementById('toast');
       t.textContent = msg;
@@ -716,15 +422,32 @@
       return clean;
     }
 
-    // iOS болон Android SMS URL ялгааг шийдэх
     function buildSmsLink(phone, body) {
       const ua = navigator.userAgent || navigator.vendor || window.opera;
       const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
       const sep = isIOS ? '&' : '?';
-      return `sms:${phone}${sep}body=${encodeURIComponent(body)}`; }  function sendSmsDirect(cmdBody) { window.location.href = buildSmsLink(settings.sim, cmdBody); }  function copyText(txt) { navigator.clipboard.writeText(txt); showToast('Хуулагдлаа: ' + txt); }  // Команд угсрагч (Стандарт болон Callny # горим) function makeUserAddCmd(u) { if (settings.fwType === 'callny') { return `${settings.pwd}#${u.slot}#${u.phone}#`;
+      return `sms:${phone}${sep}body=${encodeURIComponent(body)}`;
+    }
+
+    function sendSmsDirect(cmdBody) {
+      window.location.href = buildSmsLink(settings.sim, cmdBody);
+    }
+
+    function copyText(txt) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(txt);
+      }
+      showToast('Хуулагдлаа: ' + txt);
+    }
+
+    function makeUserAddCmd(u) {
+      if (settings.fwType === 'callny') {
+        return `${settings.pwd}#${u.slot}#${u.phone}#`;
       }
       if (u.type === 'temp' && u.start && u.end) {
-        return `${settings.pwd}A${u.slot}#${u.phone}#${u.start}#${u.end}#`; } return `${settings.pwd}A${u.slot}#${u.phone}#`;
+        return `${settings.pwd}A${u.slot}#${u.phone}#${u.start}#${u.end}#`;
+      }
+      return `${settings.pwd}A${u.slot}#${u.phone}#`;
     }
 
     function makeUserDelCmd(slot) {
@@ -732,7 +455,6 @@
       return `${settings.pwd}A${slot}##`;
     }
 
-    // Хугацаа дууссан эсэхийг шалгах (YYMMDDHHmm)
     function isExpired(endCode) {
       if (!endCode || endCode.length !== 10) return false;
       const now = new Date();
@@ -744,11 +466,16 @@
       return endCode < cur;
     }
 
-    // Дээд Статус Самбар Шинэчлэх
     function updateDashboardStats() {
       document.getElementById('statSim').textContent = settings.sim;
       document.getElementById('headerCallBtn').href = 'tel:' + settings.sim;
-      document.getElementById('statGateName').innerHTML = `<i class="fa-solid fa-location-dot mr-1"></i> ${settings.gateName}`; document.getElementById('statPwd').textContent = settings.pwd; document.getElementById('statModeBadge').textContent = settings.authMode + ' ГОРИМ'; document.getElementById('statFirmware').textContent = settings.fwType === 'callny' ? 'Callny / G202 (#) команд' : 'Стандарт RTU5024 команд'; document.getElementById('statGotCode').textContent = settings.got; const gotLabels = { '000': '0.5 сек (Импульс)', '999': 'Байнга залгаатай (Latch)' }; document.getElementById('statGotText').textContent = gotLabels[settings.got] \vert{}\vert{} `${parseInt(settings.got, 10)} секунд`;
+      document.getElementById('statGateName').innerHTML = `<i class="fa-solid fa-location-dot mr-1"></i> ${settings.gateName}`;
+      document.getElementById('statPwd').textContent = settings.pwd;
+      document.getElementById('statModeBadge').textContent = settings.authMode + ' ГОРИМ';
+      document.getElementById('statFirmware').textContent = settings.fwType === 'callny' ? 'Callny / G202 (#) команд' : 'Стандарт RTU5024 команд';
+      document.getElementById('statGotCode').textContent = settings.got;
+      const gotLabels = { '000': '0.5 сек (Импульс)', '999': 'Байнга залгаатай (Latch)' };
+      document.getElementById('statGotText').textContent = gotLabels[settings.got] || `${parseInt(settings.got, 10)} секунд`;
 
       const adminCount = users.filter(u => parseInt(u.slot, 10) >= 1 && parseInt(u.slot, 10) <= 5).length;
       document.getElementById('statUserCount').textContent = users.length;
@@ -756,7 +483,6 @@
       document.getElementById('statUserBar').style.width = Math.min(100, (users.length / 200) * 100) + '%';
     }
 
-    // Хэрэглэгчдийн Хүснэгт Зурах
     function renderUsers() {
       const tbody = document.getElementById('userTableBody');
       const q = document.getElementById('searchInput').value.toLowerCase().trim();
@@ -790,10 +516,10 @@
         if (u.type === 'temp') {
           if (exp) {
             badgeHtml = `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs px-2.5 py-0.5 rounded-full">⚠️ Хугацаа дууссан</span>
-                         <div class="text-[10px] text-rose-400/80 font-mono mt-1">${u.start} ->${u.end}</div>`;
+                         <div class="text-[10px] text-rose-400/80 font-mono mt-1">${u.start} -> ${u.end}</div>`;
           } else {
             badgeHtml = `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs px-2.5 py-0.5 rounded-full">● Цагийн хязгаартай</span>
-                         <div class="text-[10px] text-slate-400 font-mono mt-1">${u.start} ->${u.end}</div>`;
+                         <div class="text-[10px] text-slate-400 font-mono mt-1">${u.start} -> ${u.end}</div>`;
           }
         }
 
@@ -807,20 +533,20 @@
             <td class="py-3.5 px-4">${badgeHtml}</td>
             <td class="py-3.5 px-4">
               <div class="flex items-center gap-1.5">
-                <button onclick="copyText('${addCmd}')" title="${addCmd}" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs px-2.5 py-1 rounded-lg flex items-center gap-1">
+                <button type="button" onclick="copyText('${addCmd}')" title="${addCmd}" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs px-2.5 py-1 rounded-lg flex items-center gap-1">
                   <i class="fa-regular fa-copy text-blue-400"></i> Нэмэх
                 </button>
-                <button onclick="sendSmsDirect('${addCmd}')" title="Утаснаас SMS илгээх" class="bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 text-xs px-2.5 py-1 rounded-lg">
+                <button type="button" onclick="sendSmsDirect('${addCmd}')" title="Утаснаас SMS илгээх" class="bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 text-xs px-2.5 py-1 rounded-lg">
                   <i class="fa-solid fa-paper-plane"></i>
                 </button>
               </div>
             </td>
             <td class="py-3.5 px-4 text-right">
               <div class="flex justify-end gap-1.5">
-                <button onclick="openUserModal('${u.slot}')" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs" title="Засах">
+                <button type="button" onclick="openUserModal('${u.slot}')" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs" title="Засах">
                   <i class="fa-solid fa-pen"></i>
                 </button>
-                <button onclick="deleteUser('${u.slot}', '${delCmd}')" class="p-1.5 bg-rose-950/50 hover:bg-rose-900/70 text-rose-400 rounded-lg text-xs" title="Устгах">
+                <button type="button" onclick="deleteUser('${u.slot}', '${delCmd}')" class="p-1.5 bg-rose-950/50 hover:bg-rose-900/70 text-rose-400 rounded-lg text-xs" title="Устгах">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               </div>
@@ -830,7 +556,6 @@
       }).join('');
     }
 
-    // Дараагийн сул слотыг автоматаар олох
     function getNextFreeSlot() {
       const used = new Set(users.map(u => parseInt(u.slot, 10)));
       for (let i = 1; i <= 200; i++) {
@@ -867,13 +592,41 @@
       const modal = document.getElementById('userModal');
       if (slot) {
         const u = users.find(x => x.slot === slot);
-        document.getElementById('modalTitle').textContent = `Слот #${slot} засах`; document.getElementById('mSlot').value = parseInt(u.slot, 10); document.getElementById('mName').value = u.name; document.getElementById('mPhone').value = u.phone; document.getElementById('mType').value = u.type; } else { const nextSlot = getNextFreeSlot(); document.getElementById('modalTitle').textContent = 'Шинэ хэрэглэгч нэмэх'; document.getElementById('mSlot').value = parseInt(nextSlot, 10); document.getElementById('mName').value = ''; document.getElementById('mPhone').value = ''; document.getElementById('mType').value = 'perm'; } checkSlotRole(); toggleTimeFields(); modal.classList.remove('hidden'); }  function closeUserModal() { document.getElementById('userModal').classList.add('hidden'); }  function saveUser(sendSmsAfter) { const rawSlot = parseInt(document.getElementById('mSlot').value, 10); if (!rawSlot \vert{}\vert{} rawSlot < 1 \vert{}\vert{} rawSlot > 200) return alert('Слот 1-ээс 200 хооронд байх ёстой!'); const slot = String(rawSlot).padStart(3, '0'); const name = document.getElementById('mName').value.trim() \vert{}\vert{} `Хэрэглэгч #${slot}`;
+        document.getElementById('modalTitle').textContent = `Слот #${slot} засах`;
+        document.getElementById('mSlot').value = parseInt(u.slot, 10);
+        document.getElementById('mName').value = u.name;
+        document.getElementById('mPhone').value = u.phone;
+        document.getElementById('mType').value = u.type;
+      } else {
+        const nextSlot = getNextFreeSlot();
+        document.getElementById('modalTitle').textContent = 'Шинэ хэрэглэгч нэмэх';
+        document.getElementById('mSlot').value = parseInt(nextSlot, 10);
+        document.getElementById('mName').value = '';
+        document.getElementById('mPhone').value = '';
+        document.getElementById('mType').value = 'perm';
+      }
+      checkSlotRole();
+      toggleTimeFields();
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeUserModal() {
+      const modal = document.getElementById('userModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function saveUser(sendSmsAfter) {
+      const rawSlot = parseInt(document.getElementById('mSlot').value, 10);
+      if (!rawSlot || rawSlot < 1 || rawSlot > 200) return alert('Слот 1-ээс 200 хооронд байх ёстой!');
+      const slot = String(rawSlot).padStart(3, '0');
+      const name = document.getElementById('mName').value.trim() || `Хэрэглэгч #${slot}`;
       const rawPhone = document.getElementById('mPhone').value.trim();
       if (!rawPhone) return alert('Утасны дугаар оруулна уу!');
       const phone = formatPhone(rawPhone);
       const type = document.getElementById('mType').value;
 
-      // Давхардал шалгах
       const existingSlot = users.find(u => u.slot === slot && u.slot !== editingSlot);
       if (existingSlot) {
         if (!confirm(`Слот ${slot} дээр "${existingSlot.name}" бүртгэлтэй байна. Дарж хадгалах уу?`)) return;
@@ -893,7 +646,17 @@
       closeUserModal();
       updateDashboardStats();
       renderUsers();
-      showToast(`Слот #${slot} амжилттай хадгалагдлаа!`);  if (sendSmsAfter) { sendSmsDirect(makeUserAddCmd(newUser)); } }  function deleteUser(slot, delCmd) { const u = users.find(x => x.slot === slot); if (!confirm(`Слот #${slot} (${u.name})-г жагсаалтаас устгах уу?`)) return; const sendDelSms = confirm(`Төхөөрөмжийн санах ойгоос устгах SMS командыг (${delCmd}) утаснаас илгээх үү?`);
+      showToast(`Слот #${slot} амжилттай хадгалагдлаа!`);
+
+      if (sendSmsAfter) {
+        sendSmsDirect(makeUserAddCmd(newUser));
+      }
+    }
+
+    function deleteUser(slot, delCmd) {
+      const u = users.find(x => x.slot === slot);
+      if (!confirm(`Слот #${slot} (${u.name})-г жагсаалтаас устгах уу?`)) return;
+      const sendDelSms = confirm(`Төхөөрөмжийн санах ойгоос устгах SMS командыг (${delCmd}) утаснаас илгээх үү?`);
       users = users.filter(x => x.slot !== slot);
       localStorage.setItem('rtu5024_users', JSON.stringify(users));
       updateDashboardStats();
@@ -901,7 +664,6 @@
       if (sendDelSms) sendSmsDirect(delCmd);
     }
 
-    // 22 SMS Команд Жагсаалт Үүсгэх
     function renderCommands() {
       document.getElementById('cmdTargetSim').textContent = settings.sim;
       const p = settings.pwd;
@@ -915,16 +677,25 @@
       const cmds = [
         { id: 1, title: '1. Төхөөрөмж эхлүүлэх (SIM таниулах)', cmd: `${p}TEL${settings.sim}#`, desc: 'Хамгийн эхэнд заавал илгээнэ' },
         { id: 2, title: '2. Дотоод цаг тааруулах (Sync Clock)', cmd: `${p}T${curTime}#`, desc: 'Одоогийн цагаар тохируулах' },
-        { id: 3, title: '3. Нууц үг солих', cmd: `${p}P6666`, desc: 'Нууц үгийг 6666 болгох жишээ' }, { id: 4, title: '4. Байнгын хэрэглэгч нэмэх', cmd: `${p}A001#${settings.sim}#`, desc: '001 слотод байнгын эрх өгөх' }, { id: 5, title: '5. Цагийн хязгаартай хэрэглэгч', cmd: `${p}A016#${settings.sim}#${curTime}#2612312359#`, desc: 'Түр хугацааны эрх олгох' },
-        { id: 6, title: '6. Слот дахь дугаар шалгах', cmd: `${p}A001#`, desc: '001 байршлын дугаарыг асуух' }, { id: 7, title: '7. Багцаар дугаар шалгах', cmd: `${p}AL001#020#`, desc: '1-ээс 20-р слотын жагсаалт авах' },
-        { id: 8, title: '8. Хэрэглэгчийн дугаар устгах', cmd: `${p}A002##`, desc: '002 слотыг хоослох' }, { id: 9, title: '9. Бүх дугаарт нээлттэй болгох', cmd: `${p}ALL#`, desc: 'Хэн ч залгасан хаалга онгойно' },
-        { id: 10, title: '10. Зөвхөн бүртгэлтэй дугаарт зөвшөөрөх', cmd: `${p}AUT#`, desc: 'Caller-ID хамгаалалт идэвхжүүлэх' }, { id: 11, title: '11. Реле залгаатай байх хугацаа (GOT)', cmd: `${p}GOT${settings.got}#`, desc: `Одоогийн тохиргоо: ${settings.got}` },
-        { id: 12, title: '12. Реле ON үед SMS мэдэгдэл авах', cmd: `${p}GON11#DoorOpen#`, desc: 'Админ болон залгагчид мессеж очно' }, { id: 13, title: '13. Реле OFF үед SMS мэдэгдэл тохируулах', cmd: `${p}GOFF00#DoorClose#`, desc: 'Хаагдах үеийн мессеж тохиргоо' },
-        { id: 14, title: '14. Реле ON мэдэгдлийг цуцлах', cmd: `${p}GON##`, desc: 'Нээгдэх үед SMS явуулахгүй' }, { id: 15, title: '15. Реле OFF мэдэгдлийг цуцлах', cmd: `${p}GOFF##`, desc: 'Хаагдах үед SMS явуулахгүй' },
+        { id: 3, title: '3. Нууц үг солих', cmd: `${p}P6666`, desc: 'Нууц үгийг 6666 болгох жишээ' },
+        { id: 4, title: '4. Байнгын хэрэглэгч нэмэх', cmd: `${p}A001#${settings.sim}#`, desc: '001 слотод байнгын эрх өгөх' },
+        { id: 5, title: '5. Цагийн хязгаартай хэрэглэгч', cmd: `${p}A016#${settings.sim}#${curTime}#2612312359#`, desc: 'Түр хугацааны эрх олгох' },
+        { id: 6, title: '6. Слот дахь дугаар шалгах', cmd: `${p}A001#`, desc: '001 байршлын дугаарыг асуух' },
+        { id: 7, title: '7. Багцаар дугаар шалгах', cmd: `${p}AL001#020#`, desc: '1-ээс 20-р слотын жагсаалт авах' },
+        { id: 8, title: '8. Хэрэглэгчийн дугаар устгах', cmd: `${p}A002##`, desc: '002 слотыг хоослох' },
+        { id: 9, title: '9. Бүх дугаарт нээлттэй болгох', cmd: `${p}ALL#`, desc: 'Хэн ч залгасан хаалга онгойно' },
+        { id: 10, title: '10. Зөвхөн бүртгэлтэй дугаарт зөвшөөрөх', cmd: `${p}AUT#`, desc: 'Caller-ID хамгаалалт идэвхжүүлэх' },
+        { id: 11, title: '11. Реле залгаатай байх хугацаа (GOT)', cmd: `${p}GOT${settings.got}#`, desc: `Одоогийн тохиргоо: ${settings.got}` },
+        { id: 12, title: '12. Реле ON үед SMS мэдэгдэл авах', cmd: `${p}GON11#DoorOpen#`, desc: 'Админ болон залгагчид мессеж очно' },
+        { id: 13, title: '13. Реле OFF үед SMS мэдэгдэл тохируулах', cmd: `${p}GOFF00#DoorClose#`, desc: 'Хаагдах үеийн мессеж тохиргоо' },
+        { id: 14, title: '14. Реле ON мэдэгдлийг цуцлах', cmd: `${p}GON##`, desc: 'Нээгдэх үед SMS явуулахгүй' },
+        { id: 15, title: '15. Реле OFF мэдэгдлийг цуцлах', cmd: `${p}GOFF##`, desc: 'Хаагдах үед SMS явуулахгүй' },
         { id: 16, title: '16. SMS-ээр Реле ЗАЛГАХ (ON)', cmd: settings.fwType === 'callny' ? `${p}#ON#` : `${p}CC`, desc: 'Шууд хаалга онгойлгох команд' },
         { id: 17, title: '17. SMS-ээр Реле САЛГАХ (OFF)', cmd: settings.fwType === 'callny' ? `${p}#OFF#` : `${p}DD`, desc: 'Шууд реле салгах команд' },
-        { id: 18, title: '18. Төлөв болон Сүлжээ шалгах', cmd: `${p}EE`, desc: 'Реле болон GSM дохионы хүч асуух' }, { id: 19, title: '19. Автомат тайлангийн цаг тохируулах', cmd: `${p}T#024#`, desc: '24 цаг тутам 001 рүү тайлан илгээх' },
-        { id: 20, title: '20. Автомат тайлангийн хугацаа шалгах', cmd: `${p}T#`, desc: 'Тохируулсан интервалыг лавлах' }, { id: 21, title: '21. IMEI болон Firmware хувилбар', cmd: `${p}IMEI#`, desc: 'Модулийн мэдээлэл шалгах' },
+        { id: 18, title: '18. Төлөв болон Сүлжээ шалгах', cmd: `${p}EE`, desc: 'Реле болон GSM дохионы хүч асуух' },
+        { id: 19, title: '19. Автомат тайлангийн цаг тохируулах', cmd: `${p}T#024#`, desc: '24 цаг тутам 001 рүү тайлан илгээх' },
+        { id: 20, title: '20. Автомат тайлангийн хугацаа шалгах', cmd: `${p}T#`, desc: 'Тохируулсан интервалыг лавлах' },
+        { id: 21, title: '21. IMEI болон Firmware хувилбар', cmd: `${p}IMEI#`, desc: 'Модулийн мэдээлэл шалгах' },
         { id: 22, title: '22. Үйлдвэрийн тохиргоонд буцаах', cmd: `RESET`, desc: 'Хэрэглэгчийн дугаарууд устахгүй' }
       ];
 
@@ -933,3 +704,176 @@
           <div class="min-w-0">
             <div class="text-xs font-bold text-white">${c.title}</div>
             <div class="text-[11px] text-slate-400">${c.desc}</div>
+            <div class="mt-1.5 inline-block bg-slate-950 border border-slate-800 px-2.5 py-1 rounded text-xs font-mono text-emerald-400 select-all">${c.cmd}</div>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button type="button" onclick="copyText('${c.cmd}')" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs" title="Команд хуулах">
+              <i class="fa-regular fa-copy"></i>
+            </button>
+            <button type="button" onclick="sendSmsDirect('${c.cmd}')" class="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1" title="Утаснаас илгээх">
+              <i class="fa-solid fa-paper-plane"></i> Илгээх
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function switchTab(tab) {
+      ['users', 'commands', 'settings'].forEach(t => {
+        const panel = document.getElementById('tab-' + t);
+        const btn = document.getElementById('tabBtn-' + t);
+        if (t === tab) {
+          panel.classList.remove('hidden');
+          btn.classList.add('border-blue-500', 'text-blue-400');
+          btn.classList.remove('border-transparent', 'text-slate-400');
+        } else {
+          panel.classList.add('hidden');
+          btn.classList.remove('border-blue-500', 'text-blue-400');
+          btn.classList.add('border-transparent', 'text-slate-400');
+        }
+      });
+      if (tab === 'commands') renderCommands();
+      if (tab === 'settings') loadSettingsForm();
+    }
+
+    function loadSettingsForm() {
+      document.getElementById('setGateName').value = settings.gateName;
+      document.getElementById('setSim').value = settings.sim;
+      document.getElementById('setPwd').value = settings.pwd;
+      document.getElementById('setAuthMode').value = settings.authMode;
+      document.getElementById('setGot').value = settings.got;
+      document.getElementById('setFwType').value = settings.fwType || 'standard';
+      document.getElementById('setPhonePrefix').value = settings.phonePrefix || '00976';
+      document.getElementById('setAppPin').value = settings.appPin || '';
+    }
+
+    function saveSettings() {
+      settings.gateName = document.getElementById('setGateName').value.trim() || 'Төв хаалга';
+      settings.sim = document.getElementById('setSim').value.trim() || '0097699112233';
+      settings.pwd = document.getElementById('setPwd').value.trim() || '1234';
+      settings.authMode = document.getElementById('setAuthMode').value;
+      settings.got = document.getElementById('setGot').value;
+      settings.fwType = document.getElementById('setFwType').value;
+      settings.phonePrefix = document.getElementById('setPhonePrefix').value;
+      settings.appPin = document.getElementById('setAppPin').value.trim();
+
+      localStorage.setItem('rtu5024_settings', JSON.stringify(settings));
+      updateDashboardStats();
+      renderUsers();
+      showToast('Тохиргоо амжилттай хадгалагдлаа!');
+    }
+
+    function resetAllData() {
+      if (!confirm('Бүх хэрэглэгчийн жагсаалт болон тохиргоог анхны төлөвт буцаах уу?')) return;
+      localStorage.removeItem('rtu5024_settings');
+      localStorage.removeItem('rtu5024_users');
+      location.reload();
+    }
+
+    function exportCSV() {
+      const headers = ['Slot,Name,Phone,Type,Start,End,SMS_Command'];
+      const rows = users.map(u => `${u.slot},"${u.name}",${u.phone},${u.type},${u.start},${u.end},${makeUserAddCmd(u)}`);
+      const csvContent = '\uFEFF' + headers.concat(rows).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `RTU5024_Users_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+    }
+
+    function importData(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const text = evt.target.result;
+        const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+        let imported = [];
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(',');
+          if (cols.length >= 3) {
+            const slot = String(parseInt(cols[0].trim(), 10) || i).padStart(3, '0');
+            const name = cols[1].replace(/"/g, '').trim();
+            const phone = cols[2].trim();
+            const type = (cols[3] || 'perm').trim();
+            const start = (cols[4] || '').trim();
+            const end = (cols[5] || '').trim();
+            imported.push({ slot, name, phone, type, start, end });
+          }
+        }
+        if (imported.length > 0) {
+          users = imported.slice(0, 200);
+          localStorage.setItem('rtu5024_users', JSON.stringify(users));
+          updateDashboardStats();
+          renderUsers();
+          showToast(`${users.length} хэрэглэгч амжилттай импортлогдлоо!`);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function toggleSimulator() {
+      document.getElementById('simulatorPanel').classList.toggle('hidden');
+    }
+
+    function runSimulation(action) {
+      const stateEl = document.getElementById('simRelayState');
+      const ledEl = document.getElementById('simLed');
+      const barEl = document.getElementById('simGateBar');
+      const timerEl = document.getElementById('simTimerText');
+
+      if (action === 'sms_off') {
+        stateEl.textContent = 'OFF (Салгагдсан)';
+        stateEl.className = 'text-lg font-bold text-rose-400 mt-0.5';
+        ledEl.className = 'w-4 h-4 rounded-full bg-slate-700';
+        barEl.style.width = '0%';
+        timerEl.textContent = 'Хаалга хаагдсан.';
+        return;
+      }
+
+      stateEl.textContent = 'ON (Залгагдсан)';
+      stateEl.className = 'text-lg font-bold text-emerald-400 mt-0.5';
+      ledEl.className = 'w-4 h-4 rounded-full bg-emerald-400 shadow-lg shadow-emerald-400';
+      barEl.style.width = '100%';
+
+      if (settings.got === '999') {
+        timerEl.textContent = 'GOT=999: Дараагийн дуудлага иртэл залгаатай хэвээр байна.';
+      } else {
+        const ms = settings.got === '000' ? 1200 : parseInt(settings.got, 10) * 1000;
+        timerEl.textContent = `Реле идэвхжлээ (${settings.got === '000' ? '0.5 сек импульс' : settings.got + ' сек'})...`;
+        setTimeout(() => {
+          stateEl.textContent = 'OFF (Салгагдсан)';
+          stateEl.className = 'text-lg font-bold text-rose-400 mt-0.5';
+          ledEl.className = 'w-4 h-4 rounded-full bg-slate-700';
+          barEl.style.width = '0%';
+          timerEl.textContent = 'Автоматаар салгагдлаа.';
+        }, Math.min(ms, 5000));
+      }
+    }
+
+    function checkPinLock() {
+      if (settings.appPin && settings.appPin.length > 0) {
+        const modal = document.getElementById('pinLockModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+    }
+
+    function unlockApp() {
+      const val = document.getElementById('pinInput').value;
+      if (val === settings.appPin) {
+        const modal = document.getElementById('pinLockModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      } else {
+        alert('ПИН код буруу байна!');
+      }
+    }
+
+    checkPinLock();
+    updateDashboardStats();
+    renderUsers();
+  </script>
+</body>
+</html>
