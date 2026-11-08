@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RTU5024 GSM Админ Удирдлагын Самбар</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-sky-500 selection:text-white">
+
+  <!-- Мэдэгдлийн хөвөгч самбар (Toast Notification) -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Үндсэн толгой цэс -->
+  <header class="bg-slate-900/90 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20 text-white text-xl">
+          <i class="ph-bold ph-broadcast"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">RTU5024 Ухаалаг Реле</h1>
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> v1.7.1
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">GSM Хаалга & Зайнаас удирдах системийн Админ консол</p>
+        </div>
+      </div>
+
+      <!-- Төхөөрөмжийн төлөв ба Шууд дуудлагын товч -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <a id="quickCallBtn" href="tel:" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-md shadow-emerald-900/30">
+          <i class="ph-bold ph-phone-call text-sm"></i>
+          <span class="hidden sm:inline">Хаалга нээх (Дуудлага)</span>
+          <span class="sm:hidden">Залгах</span>
+        </a>
+        <button onclick="openSimulationModal()" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 transition-all">
+          <i class="ph-bold ph-circuit-board text-sm"></i>
+          <span>Симулятор</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Үндсэн биеийн контейнер -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- 1. ТӨХӨӨРӨМЖИЙН ХОЛБОЛТ БА ХУРААНГУЙ КАРТУУД -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Төхөөрөмжийн нэр ба дугаар -->
+      <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 relative overflow-hidden group hover:border-slate-700 transition">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-medium text-slate-400">Төхөөрөмжийн SIM</span>
+          <span class="w-7 h-7 rounded-lg bg-sky-500/10 text-sky-400 flex items-center justify-center">
+            <i class="ph ph-sim-card"></i>
+          </span>
+        </div>
+        <div id="dispDevicePhone" class="text-lg font-bold text-white tracking-wide font-mono">0097699112233</div>
+        <div class="text-xs text-slate-400 mt-1 flex items-center gap-1">
+          <i class="ph-bold ph-gear text-slate-500"></i>
+          <span id="dispDeviceName">Төв хашааны гүйдэг хаалга</span>
+        </div>
+      </div>
+
+      <!-- Нууц үг ба Хандалтын горим -->
+      <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 relative overflow-hidden group hover:border-slate-700 transition">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-medium text-slate-400">Нууц үг & Хамгаалалт</span>
+          <span class="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+            <i class="ph ph-lock-key"></i>
+          </span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div id="dispDevicePwd" class="text-lg font-bold text-white font-mono tracking-widest">1234</div>
+          <span id="dispDeviceMode" class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30">AUT Горим</span>
+        </div>
+        <div class="text-xs text-slate-400 mt-1">Зөвхөн эрхтэй 200 дугаарт нээлттэй</div>
+      </div>
+
+      <!-- Релений залгах хугацаа (GOT) -->
+      <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 relative overflow-hidden group hover:border-slate-700 transition">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-medium text-slate-400">Реле ажиллах хугацаа (GOT)</span>
+          <span class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
+            <i class="ph ph-timer"></i>
+          </span>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span id="dispRelayTime" class="text-lg font-bold text-white font-mono">000</span>
+          <span id="dispRelayDesc" class="text-xs text-amber-400 font-medium">0.5 сек (Импульс)</span>
+        </div>
+        <div class="text-xs text-slate-400 mt-1">Хаалга онгойх коммандын контакт</div>
+      </div>
+
+      <!-- Хэрэглэгчийн багтаамж (001-200) -->
+      <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 relative overflow-hidden group hover:border-slate-700 transition">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-medium text-slate-400">Бүртгэлтэй Хэрэглэгчид</span>
+          <span class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+            <i class="ph ph-users-three"></i>
+          </span>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span id="dispUserCount" class="text-lg font-bold text-white font-mono">3</span>
+          <span class="text-xs text-slate-400">/ 200 Слот эзэлсэн</span>
+        </div>
+        <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+          <div id="dispCapacityBar" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 1.5%;"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 2. ҮНДСЭН ТАВУУД (ХЭРЭГЛЭГЧИД, 22 КОММАНД, СИСТЕМ ТОХИРГОО) -->
+    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+      
+      <!-- Тав товчлуурууд -->
+      <div class="flex border-b border-slate-800 bg-slate-950/40 px-4 pt-3 gap-2 overflow-x-auto">
+        <button onclick="switchTab('usersTab')" id="tabBtn-usersTab" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl border-b-2 border-sky-500 text-sky-400 bg-slate-900 flex items-center gap-2 transition">
+          <i class="ph-bold ph-users text-base"></i>
+          <span>200 Хэрэглэгчийн Бүртгэл</span>
+          <span id="userBadgeCount" class="bg-sky-500/20 text-sky-300 text-xs px-2 py-0.5 rounded-full font-mono">3</span>
+        </button>
+        <button onclick="switchTab('commandsTab')" id="tabBtn-commandsTab" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
+          <i class="ph-bold ph-terminal text-base"></i>
+          <span>22 SMS Комманд Үүсгэгч</span>
+          <span class="bg-slate-800 text-slate-300 text-xs px-2 py-0.5 rounded-full font-mono">22</span>
+        </button>
+        <button onclick="switchTab('settingsTab')" id="tabBtn-settingsTab" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
+          <i class="ph-bold ph-sliders-horizontal text-base"></i>
+          <span>Төхөөрөмжийн Тохиргоо</span>
+        </button>
+      </div>
+
+      <!-- ================= ТАВ 1: ХЭРЭГЛЭГЧИЙН УДИРДЛАГА (200 СЛОТ) ================= -->
+      <div id="usersTab" class="tab-content p-4 sm:p-6 space-y-4">
+        
+        <!-- Хайлтын ба Үйлдлийн мөр -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          
+          <div class="flex flex-1 items-center gap-2">
+            <!-- Хайлт -->
+            <div class="relative flex-1 max-w-md">
+              <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-base"></i>
+              <input type="text" id="userSearchInput" oninput="renderUsersTable()" placeholder="Нэр, дугаар, слот хайх..." class="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-700/80 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 transition">
+            </div>
+
+            <!-- Шүүлтүүр -->
+            <select id="userFilterSelect" onchange="renderUsersTable()" class="bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-300 focus:outline-none focus:border-sky-500 transition">
+              <option value="all">Бүх хэрэглэгч</option>
+              <option value="permanent">Байнгын эрхтэй</option>
+              <option value="temporary">Цагийн хязгаартай</option>
+            </select>
+          </div>
+
+          <!-- Нэмэх ба Экспорт товчлуур -->
+          <div class="flex items-center gap-2">
+            <button onclick="exportToCSV()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs sm:text-sm font-medium border border-slate-700 flex items-center gap-1.5 transition" title="Хүснэгтийг Excel/CSV файл болгон татаж авах">
+              <i class="ph-bold ph-file-csv text-base"></i>
+              <span class="hidden md:inline">CSV Татах</span>
+            </button>
+            <button onclick="openAddUserModal()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5 shadow-lg shadow-sky-600/30 transition">
+              <i class="ph-bold ph-user-plus text-base"></i>
+              <span>Хэрэглэгч Нэмэх</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Хэрэглэгчийн хүснэгт -->
+        <div class="overflow-x-auto border border-slate-800 rounded-xl">
+          <table class="w-full text-left border-collapse text-xs sm:text-sm">
+            <thead>
+              <tr class="bg-slate-950 text-slate-400 border-b border-slate-800">
+                <th class="py-3 px-3 sm:px-4 font-semibold w-16">Слот</th>
+                <th class="py-3 px-3 sm:px-4 font-semibold">Нэр / Тайлбар</th>
+                <th class="py-3 px-3 sm:px-4 font-semibold">Утасны дугаар</th>
+                <th class="py-3 px-3 sm:px-4 font-semibold">Хандалтын төрөл</th>
+                <th class="py-3 px-3 sm:px-4 font-semibold text-center w-36">SMS Команд</th>
+                <th class="py-3 px-3 sm:px-4 font-semibold text-right w-24">Үйлдэл</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody" class="divide-y divide-slate-800/60 bg-slate-900/40">
+              <!-- Динамикаар хэрэглэгчийн жагсаалт үүснэ -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Доод тайлбар санамж -->
+        <div class="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-2 pt-1">
+          <div class="flex items-center gap-2">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span> Байнгын хэрэглэгч
+            <span class="inline-block w-2 h-2 rounded-full bg-amber-400 ml-3"></span> Хугацаат хэрэглэгч
+          </div>
+          <div>Хамгийн дээд хязгаар: <strong>200 хэрэглэгчийн санах ой</strong></div>
+        </div>
+      </div>
+
+      <!-- ================= ТАВ 2: 22 SMS КОММАНД ҮҮСГЭГЧ БА ТЕСТЕР ================= -->
+      <div id="commandsTab" class="tab-content hidden p-4 sm:p-6 space-y-6">
+        
+        <div class="bg-sky-950/30 border border-sky-800/40 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-sky-200">
+          <div class="flex items-start gap-3">
+            <i class="ph-bold ph-info text-sky-400 text-lg mt-0.5"></i>
+            <div>
+              <p class="font-semibold text-sky-100">SMS Командын дүрэм:</p>
+              <p class="text-sky-300">Бүх коммандуудыг англи гар дээр <strong>ТОМ ҮСГЭЭР (CAPS)</strong>, илүү зай авахгүйгээр илгээнэ. Одоо тохируулагдсан нууц үг: <span id="rulesPwdBadge" class="font-mono bg-sky-900/50 px-1.5 py-0.5 rounded text-white font-bold">1234</span></p>
+            </div>
+          </div>
+          <button onclick="copyAllConfigSummary()" class="px-3 py-1.5 rounded-lg bg-sky-600/30 hover:bg-sky-600/50 text-sky-200 border border-sky-500/30 font-medium flex items-center justify-center gap-1.5 transition self-start sm:self-auto">
+            <i class="ph ph-clipboard-text"></i> Бүх төлөвийг хуулах
+          </button>
+        </div>
+
+        <!-- 22 Командын интерактив картууд (Ангилалаар) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="commandsGrid">
+          <!-- Командуудын карт JavaScript дээр автоматаар бүтээгдэнэ -->
+        </div>
+
+      </div>
+
+      <!-- ================= ТАВ 3: ТӨХӨӨРӨМЖИЙН ТОХИРГОО (PROFILE) ================= -->
+      <div id="settingsTab" class="tab-content hidden p-4 sm:p-6 space-y-6">
+        
+        <form id="deviceSettingsForm" onsubmit="saveDeviceSettings(event)" class="space-y-6 max-w-3xl">
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+            <!-- Төхөөрөмжийн нэр -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Төхөөрөмжийн нэр (Байршил)</label>
+              <input type="text" id="cfgDeviceName" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-sky-500 transition" placeholder="Жишээ: Төв хашааны хаалга">
+            </div>
+
+            <!-- Төхөөрөмжийн SIM картны дугаар -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">RTU5024 SIM картын дугаар</label>
+              <input type="text" id="cfgDevicePhone" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-sm font-mono text-white focus:outline-none focus:border-sky-500 transition" placeholder="0097699112233">
+              <span class="text-[11px] text-slate-400">Улсын кодтой 00976... эсвэл 99112233</span>
+            </div>
+
+            <!-- 4 оронтой нууц үг -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">4 оронтой Администратор нууц үг</label>
+              <input type="text" maxlength="4" id="cfgDevicePwd" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-sm font-mono text-white focus:outline-none focus:border-sky-500 transition" placeholder="1234">
+              <span class="text-[11px] text-slate-400">Анхны үйлдвэрийн нууц үг: 1234</span>
+            </div>
+
+            <!-- Хандалтын горим (AUT vs ALL) -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Удирдах эрхийн горим</label>
+              <select id="cfgAccessMode" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-sky-500 transition">
+                <option value="AUT">AUT - Зөвхөн эрх бүхий дугаарууд (Зөвлөмж)</option>
+                <option value="ALL">ALL - Бүх дуудлагад нээлттэй (Хамгаалалтгүй)</option>
+              </select>
+            </div>
+
+          </div>
+
+          <!-- Релений контакт хугацаа (GOT Slider) -->
+          <div class="bg-slate-950/60 p-4 border border-slate-800 rounded-xl space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <label class="text-xs font-semibold text-slate-200">Реле залгаатай байх хугацаа (GOT)</label>
+                <p class="text-[11px] text-slate-400">Хаалга онгойлгоход реле хэдэн секунд залгагдахыг заана</p>
+              </div>
+              <div class="text-right">
+                <span id="cfgRelayDurationBadge" class="text-sm font-bold font-mono text-sky-400 bg-sky-500/10 border border-sky-500/20 px-2.5 py-1 rounded-lg">000 (0.5 сек)</span>
+              </div>
+            </div>
+
+            <input type="range" id="cfgRelaySlider" min="0" max="999" step="1" value="0" oninput="updateRelaySliderDisplay(this.value)" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-500">
+            
+            <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+              <span>000 (0.5 сек түлхэлт)</span>
+              <span>030 (30 сек)</span>
+              <span>500 (500 сек)</span>
+              <span>999 (Дараагийн дуудлага хүртэл байнга ON)</span>
+            </div>
+          </div>
+
+          <!-- Мэдэгдэл SMS тохиргоо (GON / GOFF) -->
+          <div class="bg-slate-950/60 p-4 border border-slate-800 rounded-xl space-y-3">
+            <h4 class="text-xs font-semibold text-slate-200 flex items-center gap-2">
+              <i class="ph ph-chat-teardrop-dots text-sky-400 text-base"></i>
+              Хаалга нээгдэх / хаагдахад очих SMS текст
+            </h4>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Нээгдэх үеийн текст (GON)</label>
+                <input type="text" id="cfgGonText" value="DoorOpen" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-sky-500">
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Хаагдах үеийн текст (GOFF)</label>
+                <input type="text" id="cfgGoffText" value="DoorClose" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-sky-500">
+              </div>
+            </div>
+          </div>
+
+          <!-- Хадгалах товч -->
+          <div class="flex items-center justify-between pt-2">
+            <button type="button" onclick="generateSyncTimeCommand()" class="text-xs text-sky-400 hover:text-sky-300 font-medium flex items-center gap-1">
+              <i class="ph-bold ph-clock"></i> Компьютерийн цагийг синк хийх SMS бэлдэх
+            </button>
+            <button type="submit" class="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs sm:text-sm font-semibold shadow-lg shadow-sky-600/30 transition flex items-center gap-2">
+              <i class="ph-bold ph-floppy-disk"></i> Тохиргоо Хадгалах
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ================= МОДАЛ 1: ХЭРЭГЛЭГЧ НЭМЭХ / ЗАСАХ ================= -->
+  <div id="userModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 id="modalTitle" class="text-base font-bold text-white flex items-center gap-2">
+          <i class="ph-bold ph-user-plus text-sky-400"></i> Хэрэглэгч бүртгэх
+        </h3>
+        <button onclick="closeUserModal()" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+
+      <form id="userForm" onsubmit="handleSaveUser(event)" class="space-y-4 mt-4">
+        <input type="hidden" id="editOriginalSlot">
+
+        <div class="grid grid-cols-3 gap-3">
+          <!-- Слот сонгох (001-200) -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Слот (001-200)</label>
+            <input type="text" id="userSlotInput" required placeholder="001" maxlength="3" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-sm font-mono text-white text-center focus:outline-none focus:border-sky-500">
+          </div>
+          <!-- Хэрэглэгчийн нэр -->
+          <div class="col-span-2">
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Нэр / Албан тушаал</label>
+            <input type="text" id="userNameInput" required placeholder="Жишээ: Батбаяр (Захирал)" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-sky-500">
+          </div>
+        </div>
+
+        <!-- Утасны дугаар -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Утасны дугаар</label>
+          <input type="text" id="userPhoneInput" required placeholder="0097699112233 эсвэл 99112233" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-sm font-mono text-white focus:outline-none focus:border-sky-500">
+          <p class="text-[11px] text-slate-400 mt-1">Олон улсын хэлбэрээр бүтэн оруулахыг зөвлөж байна.</p>
+        </div>
+
+        <!-- Хандалтын төрөл -->
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+          <label class="block text-xs font-semibold text-slate-300 mb-2">Хандалтын төрөл</label>
+          <div class="flex items-center gap-4 text-xs">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="accessTypeRadio" value="permanent" checked onchange="toggleTimeInputs(false)" class="text-sky-500 focus:ring-0">
+              <span class="text-slate-200">Байнгын (Always)</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="accessTypeRadio" value="temporary" onchange="toggleTimeInputs(true)" class="text-sky-500 focus:ring-0">
+              <span class="text-slate-200">Цагийн хязгаартай (Зочин)</span>
+            </label>
+          </div>
+
+          <!-- Цагийн сонголт (Нууцлагдсан) -->
+          <div id="timeLimitsContainer" class="hidden mt-3 pt-3 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Эхлэх хугацаа</label>
+              <input type="datetime-local" id="userStartDateTime" class="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Дуусах хугацаа</label>
+              <input type="datetime-local" id="userEndDateTime" class="w-full px-2 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white">
+            </div>
+            <p class="text-[10px] text-amber-400 col-span-2 mt-1">Формат төхөөрөмж дээр автоматаар ЖЖССӨӨЦЦММ болж хөрвөнө.</p>
+          </div>
+        </div>
+
+        <!-- Үүсэх SMS-ийн урьдчилсан харагдац -->
+        <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800/80">
+          <span class="text-[11px] text-slate-400 block mb-1">Үүсэх SMS команд:</span>
+          <div id="modalSmsPreview" class="text-xs font-mono text-emerald-400 break-all select-all">1234A001#0097699112233#</div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" onclick="closeUserModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition">Болих</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold shadow-lg shadow-sky-600/30 transition">Хадгалах</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= МОДАЛ 2: РЕЛЕ & ХААЛГАНЫ ТЕСТ СИМУЛЯТОР ================= -->
+  <div id="simulationModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative space-y-5">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <i class="ph-bold ph-circuit-board text-emerald-400 text-lg"></i>
+          <h3 class="text-base font-bold text-white">Хаалга ба Релений Ажиллагааны Симулятор</h3>
+        </div>
+        <button onclick="closeSimulationModal()" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+
+      <!-- Хаалганы хөдөлгөөнт дүрслэл -->
+      <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 text-center relative overflow-hidden">
+        <div class="h-32 w-full max-w-xs mx-auto border-4 border-slate-700 rounded-xl relative flex items-center justify-center bg-slate-900/60 overflow-hidden shadow-inner">
+          
+          <!-- Хаалганы далавч (Зүүн) -->
+          <div id="simGateLeft" class="absolute left-0 top-0 bottom-0 w-1/2 bg-gradient-to-r from-slate-700 to-slate-600 border-r-2 border-amber-400 transition-all duration-700 flex items-center justify-center">
+            <div class="w-2 h-10 bg-slate-800 rounded"></div>
+          </div>
+          <!-- Хаалганы далавч (Баруун) -->
+          <div id="simGateRight" class="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-l from-slate-700 to-slate-600 border-l-2 border-amber-400 transition-all duration-700 flex items-center justify-center">
+            <div class="w-2 h-10 bg-slate-800 rounded"></div>
+          </div>
+
+          <!-- Нээгдсэн үеийн ногоон тэмдэг -->
+          <div class="text-emerald-400 font-bold flex flex-col items-center gap-1 z-0">
+            <i class="ph-bold ph-door-open text-3xl animate-bounce"></i>
+            <span class="text-xs uppercase tracking-wider">НЭЭГДСЭН</span>
+          </div>
+        </div>
+
+        <!-- Релений төлөв ба тоолуур -->
+        <div class="mt-4 flex items-center justify-center gap-3">
+          <span id="simRelayBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-slate-500"></span> РЕЛЕ: САЛСАН (OFF)
+          </span>
+          <span id="simCountdown" class="text-xs font-mono text-amber-400 font-bold hidden">00.0 сек</span>
+        </div>
+      </div>
+
+      <!-- Симуляторын удирдлагууд -->
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="triggerSimulatedCall()" class="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-700/30 transition">
+          <i class="ph-bold ph-phone-call"></i> Дуудлага хийж шалгах
+        </button>
+        <button onclick="triggerSimulatedSMS()" class="py-2.5 px-4 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-sky-700/30 transition">
+          <i class="ph-bold ph-chat-teardrop-text"></i> SMS (1234CC) турших
+        </button>
+      </div>
+
+      <p class="text-[11px] text-slate-400 text-center">
+        Энэ нь одоогийн тохируулсан <span class="text-sky-400 font-mono" id="simCurrentDurationLabel">GOT000</span> секундын тохиргоогоор хаалга хэрхэн нээгдэж хаагдахыг бодитоор туршин харуулна.
+      </p>
+    </div>
+  </div>
+
+  <!-- Хөл хэсэг -->
+  <footer class="border-t border-slate-800/80 bg-slate-950 py-4 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div>RTU5024 GSM Gate & Relay Controller - Монгол хэл дээрх Админ удирдлагын систем</div>
+      <div>Бүх өгөгдөл таны хөтөчийн LocalStorage санах ойд аюулгүй хадгалагдана.</div>
+    </div>
+  </footer>
+
+  <!-- ================= JAVASCRIPT ЛОГИК БА ӨГӨГДЛИЙН БҮТЭЦ ================= -->
+  <script>
+    // 1. АНХНЫ ӨГӨГДӨЛ (STATE)
+    const DEFAULT_CONFIG = {
+      deviceName: "Төв хашааны гүйдэг хаалга",
+      devicePhone: "0097699112233",
+      devicePwd: "1234",
+      accessMode: "AUT",
+      relayDuration: 0, // 0 = 0.5s latch, 1-998s, 999 = keep on
+      gonText: "DoorOpen",
+      goffText: "DoorClose"
+    };
+
+    const DEFAULT_USERS = [
+      { slot: "001", name: "Админ Бат (Эзэмшигч)", phone: "0097699112233", type: "permanent", start: "", end: "" },
+      { slot: "002", name: "Жолооч Болд", phone: "0097699223344", type: "permanent", start: "", end: "" },
+      { slot: "003", name: "Түр засварчин Сугар", phone: "0097688114455", type: "temporary", start: "2611080800", end: "2611101800" }
+    ];
+
+    let state = {
+      config: JSON.parse(localStorage.getItem("rtu5024_config")) || DEFAULT_CONFIG,
+      users: JSON.parse(localStorage.getItem("rtu5024_users")) || DEFAULT_USERS
+    };
+
+    // 2. БҮРЭН 22 КОМАНДЫН МЭДЭЭЛЛИЙН САН
+    const ALL_COMMANDS_META = [
+      { id: 1, title: "Анхны эхлэл (Заавал хийнэ)", desc: "Төхөөрөмжийн өөрийн SIM дугаарыг бүртгэж синк хийх", template: (cfg) => `${cfg.devicePwd}TEL${cfg.devicePhone}#`, category: "admin" },
+      { id: 2, title: "Цаг тохируулах (Сүлжээ)", desc: "Дотоод цагийг ЖЖССӨӨЦЦММ форматаар синк хийх", template: (cfg) => `${cfg.devicePwd}T${getCurrentFormattedTime()}#`, category: "admin" },
+      { id: 3, title: "Нууц үг солих", desc: "4 оронтой шинэ нууц үг оноох", template: (cfg) => `${cfg.devicePwd}P6666`, category: "admin" },
+      { id: 4, title: "Байнгын хэрэглэгч нэмэх", desc: "001-200 байршилд цагийн хязгааргүй дугаар хадгалах", template: (cfg) => `${cfg.devicePwd}A004#0097699001122#`, category: "users" },
+      { id: 5, title: "Хугацаат хэрэглэгч нэмэх", desc: "Тодорхой өдөр, цагт нээх түр эрхтэй дугаар бүртгэх", template: (cfg) => `${cfg.devicePwd}A016#0097699001122#2611080800#2611101800#`, category: "users" },
+      { id: 6, title: "Байршлын дугаар шалгах", desc: "Заасан слотод ямар дугаар байгааг лавлах", template: (cfg) => `${cfg.devicePwd}A002#`, category: "users" },
+      { id: 7, title: "Хэрэглэгчдийг бөөнөөр лавлах", desc: "Слотуудын дугаарыг SMS жагсаалтаар татаж авах", template: (cfg) => `${cfg.devicePwd}AL001#050#`, category: "users" },
+      { id: 8, title: "Хэрэглэгч устгах", desc: "Заасан байршлын дугаарыг санах ойгоос арчих", template: (cfg) => `${cfg.devicePwd}A002##`, category: "users" },
+      { id: 9, title: "Бүх дуудлагыг зөвшөөрөх", desc: "Хэн ч залгасан хаалгыг онгойлгох (Нээлттэй горим)", template: (cfg) => `${cfg.devicePwd}ALL#`, category: "relay" },
+      { id: 10, title: "Зөвхөн бүртгэлтэй дугаарууд", desc: "Caller-ID хамгаалалттай горим (Үйлдвэрийн горим)", template: (cfg) => `${cfg.devicePwd}AUT#`, category: "relay" },
+      { id: 11, title: "Реле залгаатай байх хугацаа", desc: "000=0.5сек түлхэлт, 001-998сек, 999=дараагийн дуудлага хүртэл", template: (cfg) => `${cfg.devicePwd}GOT${String(cfg.relayDuration).padStart(3, '0')}#`, category: "relay" },
+      { id: 12, title: "Асахад (ON) очих SMS тохируулах", desc: "a=1-р дугаар (0/1), b=залгагч (0/1). 11=Хоёуланд нь очно", template: (cfg) => `${cfg.devicePwd}GON11#${cfg.gonText}#`, category: "sms" },
+      { id: 13, title: "Унтрахад (OFF) очих SMS тохируулах", desc: "Хаагдах үеийн мэдэгдлийн текст тохируулах", template: (cfg) => `${cfg.devicePwd}GOFF00#${cfg.goffText}#`, category: "sms" },
+      { id: 14, title: "Асах үеийн SMS-ийг хаах", desc: "Реле залгагдахад ямар ч мессеж илгээхгүй", template: (cfg) => `${cfg.devicePwd}GON##`, category: "sms" },
+      { id: 15, title: "Унтрах үеийн SMS-ийг хаах", desc: "Реле салгагдахад ямар ч мессеж илгээхгүй", template: (cfg) => `${cfg.devicePwd}GOFF##`, category: "sms" },
+      { id: 16, title: "Релег SMS-ээр асаах (ON)", desc: "Дуудлага хийхгүйгээр релег шууд залгах", template: (cfg) => `${cfg.devicePwd}CC`, category: "relay" },
+      { id: 17, title: "Релег SMS-ээр унтраах (OFF)", desc: "Релег шууд салгах", template: (cfg) => `${cfg.devicePwd}DD`, category: "relay" },
+      { id: 18, title: "Төхөөрөмжийн төлөв шалгах", desc: "Релений байдал, сүлжээний долгионы хүч (31 дээд)", template: (cfg) => `${cfg.devicePwd}EE`, category: "status" },
+      { id: 19, title: "Автомат тайлангийн хугацаа", desc: "1-р дугаар руу тогтмол цагийн интервалаар тайлан өгөх", template: (cfg) => `${cfg.devicePwd}T#024#`, category: "status" },
+      { id: 20, title: "Тайлангийн хугацааг лавлах", desc: "Одоогийн тохируулагдсан интервалыг шалгах", template: (cfg) => `${cfg.devicePwd}T#`, category: "status" },
+      { id: 21, title: "IMEI ба Програм шалгах", desc: "Үйлдвэрийн IMEI код болон Firmware хувилбар харах", template: (cfg) => `${cfg.devicePwd}IMEI#`, category: "status" },
+      { id: 22, title: "Үйлдвэрийн тохиргоонд оруулах", desc: "Хадгалсан дугаарууд устахгүй, тохиргоо арилна", template: () => `RESET`, category: "admin" }
+    ];
+
+    // Одоогийн цагийг ЖЖССӨӨЦЦММ болгох
+    function getCurrentFormattedTime() {
+      const now = new Date();
+      const yy = String(now.getFullYear()).slice(-2);
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const hh = String(now.getHours()).padStart(2, '0');
+      const min = String(now.getMinutes()).padStart(2, '0');
+      return `${yy}${mm}${dd}${hh}${min}`;
+    }
+
+    // 3. ХУУДАС АЧААЛАХ БА ТАТАХ
+    window.addEventListener('DOMContentLoaded', () => {
+      renderSummaryCards();
+      renderUsersTable();
+      renderCommandsGrid();
+      populateSettingsForm();
+    });
+
+    // 4. ДЭЭД ХУРААНГУЙ КАРТУУДЫГ ШИНЭЧЛЭХ
+    function renderSummaryCards() {
+      document.getElementById('dispDevicePhone').textContent = state.config.devicePhone;
+      document.getElementById('dispDeviceName').textContent = state.config.deviceName;
+      document.getElementById('dispDevicePwd').textContent = state.config.devicePwd;
+      document.getElementById('dispDeviceMode').textContent = `${state.config.accessMode} Горим`;
+      
+      const dur = Number(state.config.relayDuration);
+      document.getElementById('dispRelayTime').textContent = String(dur).padStart(3, '0');
+      if (dur === 0) {
+        document.getElementById('dispRelayDesc').textContent = "0.5 сек (Импульс)";
+      } else if (dur === 999) {
+        document.getElementById('dispRelayDesc').textContent = "Байнга ON (Toggle)";
+      } else {
+        document.getElementById('dispRelayDesc').textContent = `${dur} секунд`;
+      }
+
+      const count = state.users.length;
+      document.getElementById('dispUserCount').textContent = count;
+      document.getElementById('userBadgeCount').textContent = count;
+      const pct = Math.min((count / 200) * 100, 100);
+      document.getElementById('dispCapacityBar').style.width = `${pct}%`;
+
+      // Quick call
+      document.getElementById('quickCallBtn').href = `tel:${state.config.devicePhone}`;
+      document.getElementById('rulesPwdBadge').textContent = state.config.devicePwd;
+    }
+
+    // 5. ТАВ СОЛИХ ФУНКЦ
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('border-sky-500', 'text-sky-400', 'bg-slate-900');
+        btn.classList.add('border-transparent', 'text-slate-400');
+      });
+
+      const activeTab = document.getElementById(tabId);
+      const activeBtn = document.getElementById(`tabBtn-${tabId}`);
+      if (activeTab && activeBtn) {
+        activeTab.classList.remove('hidden');
+        activeBtn.classList.remove('border-transparent', 'text-slate-400');
+        activeBtn.classList.add('border-sky-500', 'text-sky-400', 'bg-slate-900');
+      }
+    }
+
+    // 6. ХЭРЭГЛЭГЧИЙН ХҮСНЭГТ РЕНДЕР ХИЙХ
+    function renderUsersTable() {
+      const tbody = document.getElementById('usersTableBody');
+      const search = document.getElementById('userSearchInput').value.trim().toLowerCase();
+      const filter = document.getElementById('userFilterSelect').value;
+
+      // Эрэмбэлэх (слотоор)
+      const sorted = [...state.users].sort((a, b) => parseInt(a.slot, 10) - parseInt(b.slot, 10));
+
+      const filtered = sorted.filter(u => {
+        const matchSearch = u.name.toLowerCase().includes(search) || 
+                            u.phone.includes(search) || 
+                            u.slot.includes(search);
+        if (!matchSearch) return false;
+        if (filter === 'permanent') return u.type === 'permanent';
+        if (filter === 'temporary') return u.type === 'temporary';
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center py-8 text-slate-500 text-xs">
+              Хэрэглэгч олдсонгүй. "Хэрэглэгч Нэмэх" товч дарж шинэ слот бүртгэнэ үү.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(user => {
+        const isPerm = user.type === 'permanent';
+        const cmdAdd = isPerm
+          ? `${state.config.devicePwd}A${user.slot}#${user.phone}#`
+          : `${state.config.devicePwd}A${user.slot}#${user.phone}#${user.start}#${user.end}#`;
+        const cmdDel = `${state.config.devicePwd}A${user.slot}##`;
+
+        return `
+          <tr class="hover:bg-slate-800/40 transition group">
+            <td class="py-3 px-3 sm:px-4 font-mono font-bold text-sky-400">${user.slot}</td>
+            <td class="py-3 px-3 sm:px-4">
+              <div class="font-medium text-slate-100">${escapeHtml(user.name)}</div>
+            </td>
+            <td class="py-3 px-3 sm:px-4 font-mono text-slate-300">
+              ${escapeHtml(user.phone)}
+            </td>
+            <td class="py-3 px-3 sm:px-4">
+              ${isPerm ? `
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Байнгын
+                </span>
+              ` : `
+                <div class="inline-flex flex-col">
+                  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Цагийн хязгаартай
+                  </span>
+                  <span class="text-[10px] text-slate-400 font-mono mt-0.5">${user.start || ''} -> ${user.end || ''}</span>
+                </div>
+              `}
+            </td>
+            <td class="py-3 px-3 sm:px-4 text-center">
+              <div class="flex items-center justify-center gap-1.5">
+                <button onclick="copyCommand('${cmdAdd}')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-sky-300 font-mono text-[11px] border border-slate-700 flex items-center gap-1 transition" title="Нэмэх командыг хуулах">
+                  <i class="ph ph-copy"></i> Нэмэх
+                </button>
+                <a href="sms:${state.config.devicePhone}?body=${encodeURIComponent(cmdAdd)}" class="p-1 rounded bg-slate-800 hover:bg-emerald-600 text-slate-300 hover:text-white text-xs border border-slate-700 transition" title="Утаснаас SMS илгээх">
+                  <i class="ph-bold ph-paper-plane-tilt"></i>
+                </a>
+              </div>
+            </td>
+            <td class="py-3 px-3 sm:px-4 text-right">
+              <div class="flex items-center justify-end gap-1">
+                <button onclick="editUser('${user.slot}')" class="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition" title="Засах">
+                  <i class="ph ph-pencil-simple"></i>
+                </button>
+                <button onclick="deleteUser('${user.slot}')" class="p-1.5 rounded-lg bg-slate-800/80 hover:bg-rose-900/60 text-slate-300 hover:text-rose-300 transition" title="Устгах">
+                  <i class="ph ph-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // 7. 22 КОМАНДЫН САН РЕНДЕР ХИЙХ
+    function renderCommandsGrid() {
+      const grid = document.getElementById('commandsGrid');
+      grid.innerHTML = ALL_COMMANDS_META.map(item => {
+        const cmdText = item.template(state.config);
+        const encodedSms = encodeURIComponent(cmdText);
+
+        return `
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4 flex flex-col justify-between hover:border-slate-700 transition space-y-3">
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-1">
+                <div class="flex items-center gap-2">
+                  <span class="w-5 h-5 rounded-md bg-slate-800 text-slate-300 text-xs font-mono font-bold flex items-center justify-center">${item.id}</span>
+                  <h4 class="text-xs font-bold text-white">${item.title}</h4>
+                </div>
+                <span class="text-[10px] uppercase font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-400">${item.category}</span>
+              </div>
+              <p class="text-[11px] text-slate-400">${item.desc}</p>
+            </div>
+
+            <div class="space-y-2 pt-1 border-t border-slate-900">
+              <div class="p-2 rounded-lg bg-slate-900 border border-slate-800/80 flex items-center justify-between font-mono text-xs text-sky-400 select-all">
+                <span class="truncate">${cmdText}</span>
+                <span class="text-[10px] text-slate-500 ml-1">CAPS</span>
+              </div>
+
+              <div class="flex items-center justify-end gap-2">
+                <button onclick="copyCommand('${cmdText}')" class="px-2.5 py-1 text-xs rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center gap-1 transition">
+                  <i class="ph ph-copy"></i> Хуулах
+                </button>
+                <a href="sms:${state.config.devicePhone}?body=${encodedSms}" class="px-2.5 py-1 text-xs rounded-lg bg-sky-600/30 hover:bg-sky-600 text-sky-200 hover:text-white border border-sky-500/30 flex items-center gap-1 transition">
+                  <i class="ph-bold ph-paper-plane-tilt"></i> SMS Илгээх
+                </a>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 8. ХЭРЭГЛЭГЧ НЭМЭХ / ЗАСАХ МОДАЛ УДИРДЛАГА
+    function openAddUserModal() {
+      document.getElementById('modalTitle').innerHTML = '<i class="ph-bold ph-user-plus text-sky-400"></i> Шинэ хэрэглэгч бүртгэх';
+      document.getElementById('editOriginalSlot').value = "";
+      
+      // Дараагийн сул слотыг олох
+      const usedSlots = state.users.map(u => parseInt(u.slot, 10));
+      let nextSlot = 1;
+      while (usedSlots.includes(nextSlot) && nextSlot <= 200) {
+        nextSlot++;
+      }
+      document.getElementById('userSlotInput').value = String(nextSlot).padStart(3, '0');
+      document.getElementById('userNameInput').value = "";
+      document.getElementById('userPhoneInput').value = "00976";
+      
+      document.querySelector('input[name="accessTypeRadio"][value="permanent"]').checked = true;
+      toggleTimeInputs(false);
+      updateModalSmsPreview();
+
+      document.getElementById('userModal').classList.remove('hidden');
+    }
+
+    function editUser(slot) {
+      const user = state.users.find(u => u.slot === slot);
+      if (!user) return;
+
+      document.getElementById('modalTitle').innerHTML = '<i class="ph-bold ph-pencil text-sky-400"></i> Хэрэглэгчийн мэдээлэл засах';
+      document.getElementById('editOriginalSlot').value = slot;
+      document.getElementById('userSlotInput').value = user.slot;
+      document.getElementById('userNameInput').value = user.name;
+      document.getElementById('userPhoneInput').value = user.phone;
+
+      if (user.type === 'temporary') {
+        document.querySelector('input[name="accessTypeRadio"][value="temporary"]').checked = true;
+        toggleTimeInputs(true);
+      } else {
+        document.querySelector('input[name="accessTypeRadio"][value="permanent"]').checked = true;
+        toggleTimeInputs(false);
+      }
+      updateModalSmsPreview();
+      document.getElementById('userModal').classList.remove('hidden');
+    }
+
+    function closeUserModal() {
+      document.getElementById('userModal').classList.add('hidden');
+    }
+
+    function toggleTimeInputs(show) {
+      const container = document.getElementById('timeLimitsContainer');
+      if (show) {
+        container.classList.remove('hidden');
+      } else {
+        container.classList.add('hidden');
+      }
+      updateModalSmsPreview();
+    }
+
+    // Хэрэглэгчийн маягтыг хадгалах
+    function handleSaveUser(e) {
+      e.preventDefault();
+      const rawSlot = document.getElementById('userSlotInput').value.trim();
+      const slotNum = parseInt(rawSlot, 10);
+      if (isNaN(slotNum) || slotNum < 1 || slotNum > 200) {
+        showToast("Слот нь 001-ээс 200 хооронд тоо байх ёстой!", "error");
+        return;
+      }
+      const slot = String(slotNum).padStart(3, '0');
+      const name = document.getElementById('userNameInput').value.trim();
+      const phone = document.getElementById('userPhoneInput').value.trim().replace(/\s+/g, '');
+      const type = document.querySelector('input[name="accessTypeRadio"]:checked').value;
+      const originalSlot = document.getElementById('editOriginalSlot').value;
+
+      // Давхардал шалгах
+      if (!originalSlot || originalSlot !== slot) {
+        if (state.users.some(u => u.slot === slot)) {
+          showToast(`Слот №${slot} дээр өөр хэрэглэгч бүртгэлтэй байна!`, "error");
+          return;
+        }
+      }
+
+      let start = "";
+      let end = "";
+      if (type === 'temporary') {
+        const startVal = document.getElementById('userStartDateTime').value;
+        const endVal = document.getElementById('userEndDateTime').value;
+        if (startVal && endVal) {
+          start = formatDateTimeToGSM(startVal);
+          end = formatDateTimeToGSM(endVal);
+        } else {
+          start = "2611080800";
+          end = "2611101800";
+        }
+      }
+
+      if (originalSlot) {
+        // Засах
+        const idx = state.users.findIndex(u => u.slot === originalSlot);
+        if (idx !== -1) {
+          state.users[idx] = { slot, name, phone, type, start, end };
+        }
+      } else {
+        // Шинээр нэмэх
+        state.users.push({ slot, name, phone, type, start, end });
+      }
+
+      saveState();
+      closeUserModal();
+      renderUsersTable();
+      renderSummaryCards();
+      renderCommandsGrid();
+      showToast(`Слот ${slot} амжилттай хадгалагдлаа!`, "success");
+    }
+
+    function deleteUser(slot) {
+      const user = state.users.find(u => u.slot === slot);
+      const delCmd = `${state.config.devicePwd}A${slot}##`;
+      if (confirm(`Та слот [${slot}] ${user ? user.name : ''} хэрэглэгчийг устгахдаа итгэлтэй байна уу?\n\nТөхөөрөмж дээр устгах команд: ${delCmd}`)) {
+        state.users = state.users.filter(u => u.slot !== slot);
+        saveState();
+        renderUsersTable();
+        renderSummaryCards();
+        renderCommandsGrid();
+        showToast(`Слот ${slot} устгагдлаа. Төхөөрөмж рүү ${delCmd} илгээнэ үү.`, "info");
+      }
+    }
+
+    function formatDateTimeToGSM(isoStr) {
+      // 2026-11-08T15:30 -> 2611081530
+      const d = new Date(isoStr);
+      const yy = String(d.getFullYear()).slice(-2);
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const hh = String(d.getHours()).padStart(2, '0');
+      const min = String(d.getMinutes()).padStart(2, '0');
+      return `${yy}${mm}${dd}${hh}${min}`;
+    }
+
+    function updateModalSmsPreview() {
+      const slot = String(parseInt(document.getElementById('userSlotInput').value || 1, 10)).padStart(3, '0');
+      const phone = document.getElementById('userPhoneInput').value.trim() || '0097699112233';
+      const isTemp = document.querySelector('input[name="accessTypeRadio"][value="temporary"]').checked;
+      let cmd = "";
+      if (!isTemp) {
+        cmd = `${state.config.devicePwd}A${slot}#${phone}#`;
+      } else {
+        cmd = `${state.config.devicePwd}A${slot}#${phone}#2611080800#2611101800#`;
+      }
+      const el = document.getElementById('modalSmsPreview');
+      if (el) el.textContent = cmd;
+    }
+
+    document.getElementById('userSlotInput').addEventListener('input', updateModalSmsPreview);
+    document.getElementById('userPhoneInput').addEventListener('input', updateModalSmsPreview);
+
+    // 9. ТОХИРГОО ХАДГАЛАХ
+    function populateSettingsForm() {
+      document.getElementById('cfgDeviceName').value = state.config.deviceName;
+      document.getElementById('cfgDevicePhone').value = state.config.devicePhone;
+      document.getElementById('cfgDevicePwd').value = state.config.devicePwd;
+      document.getElementById('cfgAccessMode').value = state.config.accessMode;
+      document.getElementById('cfgRelaySlider').value = state.config.relayDuration;
+      document.getElementById('cfgGonText').value = state.config.gonText;
+      document.getElementById('cfgGoffText').value = state.config.goffText;
+      updateRelaySliderDisplay(state.config.relayDuration);
+    }
+
+    function updateRelaySliderDisplay(val) {
+      const num = Number(val);
+      const badge = document.getElementById('cfgRelayDurationBadge');
+      if (num === 0) {
+        badge.textContent = "000 (0.5 сек импульс)";
+      } else if (num === 999) {
+        badge.textContent = "999 (Байнга ON)";
+      } else {
+        badge.textContent = `${String(num).padStart(3, '0')} (${num} сек)`;
+      }
+      document.getElementById('simCurrentDurationLabel').textContent = `GOT${String(num).padStart(3, '0')}#`;
+    }
+
+    function saveDeviceSettings(e) {
+      e.preventDefault();
+      const pwd = document.getElementById('cfgDevicePwd').value.trim();
+      if (pwd.length !== 4 || isNaN(pwd)) {
+        showToast("Нууц үг заавал 4 оронтой тоо байх ёстой!", "error");
+        return;
+      }
+
+      state.config.deviceName = document.getElementById('cfgDeviceName').value.trim();
+      state.config.devicePhone = document.getElementById('cfgDevicePhone').value.trim();
+      state.config.devicePwd = pwd;
+      state.config.accessMode = document.getElementById('cfgAccessMode').value;
+      state.config.relayDuration = Number(document.getElementById('cfgRelaySlider').value);
+      state.config.gonText = document.getElementById('cfgGonText').value.trim() || "DoorOpen";
+      state.config.goffText = document.getElementById('cfgGoffText').value.trim() || "DoorClose";
+
+      saveState();
+      renderSummaryCards();
+      renderCommandsGrid();
+      renderUsersTable();
+      showToast("Төхөөрөмжийн тохиргоо амжилттай хадгалагдлаа!", "success");
+    }
+
+    function generateSyncTimeCommand() {
+      const cmd = `${state.config.devicePwd}T${getCurrentFormattedTime()}#`;
+      copyCommand(cmd);
+      showToast(`Цаг тохируулах команд хуулагдлаа: ${cmd}`, "info");
+    }
+
+    function copyAllConfigSummary() {
+      const summary = `--- RTU5024 ТОХИРГОО ---\nНэр: ${state.config.deviceName}\nSIM: ${state.config.devicePhone}\nНууц үг: ${state.config.devicePwd}\nГорим: ${state.config.accessMode}\nРеле хугацаа: GOT${String(state.config.relayDuration).padStart(3, '0')}#\nХэрэглэгчдийн тоо: ${state.users.length}/200`;
+      copyToClipboard(summary);
+      showToast("Бүх мэдээлэл clipboard-д хуулагдлаа", "success");
+    }
+
+    // 10. ХААЛГА БА РЕЛЕНИЙ СИМУЛЯТОР (ТЕСТ)
+    let simTimer = null;
+    function openSimulationModal() {
+      document.getElementById('simulationModal').classList.remove('hidden');
+      resetSimulation();
+    }
+
+    function closeSimulationModal() {
+      document.getElementById('simulationModal').classList.add('hidden');
+      resetSimulation();
+    }
+
+    function resetSimulation() {
+      if (simTimer) clearInterval(simTimer);
+      const gateL = document.getElementById('simGateLeft');
+      const gateR = document.getElementById('simGateRight');
+      const badge = document.getElementById('simRelayBadge');
+      const countdown = document.getElementById('simCountdown');
+
+      gateL.style.transform = "translateX(0%)";
+      gateR.style.transform = "translateX(0%)";
+      badge.className = "px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700 flex items-center gap-1.5";
+      badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-slate-500"></span> РЕЛЕ: САЛСАН (OFF)';
+      countdown.classList.add('hidden');
+    }
+
+    function triggerSimulatedCall() {
+      runGateCycle("ДУУДЛАГА ИРСЭН -> РЕЛЕ ЗАЛГАГДЛАА");
+    }
+
+    function triggerSimulatedSMS() {
+      runGateCycle("SMS КОМАНД (1234CC) -> РЕЛЕ ЗАЛГАГДЛАА");
+    }
+
+    function runGateCycle(triggerText) {
+      resetSimulation();
+      const gateL = document.getElementById('simGateLeft');
+      const gateR = document.getElementById('simGateRight');
+      const badge = document.getElementById('simRelayBadge');
+      const countdown = document.getElementById('simCountdown');
+
+      // Хаалга нээх хөдөлгөөн
+      gateL.style.transform = "translateX(-100%)";
+      gateR.style.transform = "translateX(100%)";
+      badge.className = "px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5";
+      badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> РЕЛЕ: ЗАЛГААСТАЙ (ON)';
+
+      showToast(triggerText, "info");
+
+      let seconds = state.config.relayDuration === 0 ? 0.5 : state.config.relayDuration;
+
+      if (seconds === 999) {
+        countdown.classList.remove('hidden');
+        countdown.textContent = "БАЙНГА ON (Toggle горим)";
+        return;
+      }
+
+      countdown.classList.remove('hidden');
+      let remaining = seconds;
+      countdown.textContent = `${remaining.toFixed(1)} сек`;
+
+      simTimer = setInterval(() => {
+        remaining -= 0.1;
+        if (remaining <= 0) {
+          clearInterval(simTimer);
+          resetSimulation();
+          showToast("Реле саллаа -> Хаалга хаагдлаа", "success");
+        } else {
+          countdown.textContent = `${remaining.toFixed(1)} сек`;
+        }
+      }, 100);
+    }
+
+    // 11. CSV ЭКСПОРТ (ГААРЫН АВЛАГЫН 11-Р ХУУДСЫН ЖАГСААЛТТАЙ ИЖИЛ)
+    function exportToCSV() {
+      const headers = ["Слот", "Утасны дугаар", "Хэрэглэгчийн нэр", "Төрөл", "Эхлэх хугацаа", "Дуусах хугацаа"];
+      const rows = state.users.map(u => [
+        u.slot,
+        `"${u.phone}"`,
+        `"${u.name}"`,
+        u.type === 'permanent' ? "Байнгын" : "Түр",
+        u.start || "-",
+        u.end || "-"
+      ]);
+
+      const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `RTU5024_Users_Export_${getCurrentFormattedTime()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast("CSV файл амжилттай татагдлаа", "success");
+    }
+
+    // 12. ТУСЛАХ ФУНКЦҮҮД (CLIPBOARD, TOAST, STORAGE)
+    function copyCommand(text) {
+      copyToClipboard(text);
+      showToast(`Команд хуулагдлаа: ${text}`, "success");
+    }
+
+    function copyToClipboard(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+          document.execCommand('copy');
+        } catch (err) {
+          console.error('Copy failed', err);
+        }
+        document.body.removeChild(textArea);
+      }
+    }
+
+    function showToast(message, type = "info") {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      
+      let borderCol = "border-sky-500/30 text-sky-200 bg-slate-900";
+      let icon = "ph-info";
+      if (type === "success") {
+        borderCol = "border-emerald-500/30 text-emerald-200 bg-slate-900";
+        icon = "ph-check-circle";
+      } else if (type === "error") {
+        borderCol = "border-rose-500/30 text-rose-200 bg-slate-900";
+        icon = "ph-warning-circle";
+      }
+
+      toast.className = `flex items-center gap-2.5 px-4 py-3 rounded-xl border ${borderCol} shadow-2xl text-xs font-medium transform transition-all duration-300 translate-y-3 opacity-0`;
+      toast.innerHTML = `<i class="ph-bold ${icon} text-base"></i> <span>${message}</span>`;
+      
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.remove('translate-y-3', 'opacity-0');
+      }, 10);
+
+      setTimeout(() => {
+        toast.classList.add('translate-y-3', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    function saveState() {
+      localStorage.setItem("rtu5024_config", JSON.stringify(state.config));
+      localStorage.setItem("rtu5024_users", JSON.stringify(state.users));
+    }
+
+    function escapeHtml(string) {
+      const div = document.createElement('div');
+      div.innerText = string;
+      return div.innerHTML;
+    }
+  </script>
+
+</body>
+</html>
