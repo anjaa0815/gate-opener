@@ -277,7 +277,8 @@
               <label class="block text-xs text-slate-400 mb-1">Програм хангамжийн командын формат</label>
               <select id="setFwType" class="input-dark w-full px-3 py-2 rounded-xl text-sm">
                 <option value="standard">Стандарт RTU5024 (# тэмдэггүй: 1234CC)</option>
-                <option value="callny">Callny / G202 Клон (# тусгаарлагчтай: 1234#ON#)</option>
+                <option value="callny">Callny клон (# тусгаарлагчтай: 1234#001#дугаар#)</option>
+                <option value="g202">G202 / 5024 4G - шинэ (1234#TEL дугаар#001#)</option>
               </select>
             </div>
             <div>
@@ -341,6 +342,10 @@
             <option value="perm">Байнгын эрхтэй (Хугацаагүй)</option>
             <option value="temp">Цагийн хязгаартай (Түр эрхтэй)</option>
           </select>
+        </div>
+
+        <div id="g202TempNotice" class="hidden bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs p-2.5 rounded-xl">
+          ⚠️ G202 төхөөрөмж цагийн хязгаарыг өөрөө дэмждэггүй. Хугацаа зөвхөн энэ апп дээр тэмдэглэгдэнэ — дуусмагц устгах SMS-ийг гараар илгээнэ.
         </div>
 
         <div id="timeLimitFields" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
@@ -440,7 +445,17 @@
       showToast('Хуулагдлаа: ' + txt);
     }
 
+    // G202: GOT утга нь 0.5 сек нэгжтэй, 4 орон. 0000 = дараагийн дуудлага хүртэл залгаатай.
+    function g202GotCode(got) {
+      if (got === '999') return '0000';
+      if (got === '000') return '0001';
+      return String(parseInt(got, 10) * 2).padStart(4, '0');
+    }
+
     function makeUserAddCmd(u) {
+      if (settings.fwType === 'g202') {
+        return `${settings.pwd}#TEL${u.phone}#${u.slot}#`;
+      }
       if (settings.fwType === 'callny') {
         return `${settings.pwd}#${u.slot}#${u.phone}#`;
       }
@@ -451,6 +466,7 @@
     }
 
     function makeUserDelCmd(slot) {
+      if (settings.fwType === 'g202') return `${settings.pwd}#TEL#${slot}#`;
       if (settings.fwType === 'callny') return `${settings.pwd}#${slot}#DEL#`;
       return `${settings.pwd}A${slot}##`;
     }
@@ -472,7 +488,7 @@
       document.getElementById('statGateName').innerHTML = `<i class="fa-solid fa-location-dot mr-1"></i> ${settings.gateName}`;
       document.getElementById('statPwd').textContent = settings.pwd;
       document.getElementById('statModeBadge').textContent = settings.authMode + ' ГОРИМ';
-      document.getElementById('statFirmware').textContent = settings.fwType === 'callny' ? 'Callny / G202 (#) команд' : 'Стандарт RTU5024 команд';
+      document.getElementById('statFirmware').textContent = ({ callny: 'Callny клон (#) команд', g202: 'G202 / 5024 4G команд' })[settings.fwType] || 'Стандарт RTU5024 команд';
       document.getElementById('statGotCode').textContent = settings.got;
       const gotLabels = { '000': '0.5 сек (Импульс)', '999': 'Байнга залгаатай (Latch)' };
       document.getElementById('statGotText').textContent = gotLabels[settings.got] || `${parseInt(settings.got, 10)} секунд`;
@@ -574,6 +590,7 @@
     function toggleTimeFields() {
       const t = document.getElementById('mType').value;
       document.getElementById('timeLimitFields').classList.toggle('hidden', t !== 'temp');
+      document.getElementById('g202TempNotice').classList.toggle('hidden', !(t === 'temp' && settings.fwType === 'g202'));
     }
 
     function toYYMMDDHHmm(dtVal) {
@@ -674,7 +691,32 @@
                       String(now.getHours()).padStart(2, '0') +
                       String(now.getMinutes()).padStart(2, '0');
 
-      const cmds = [
+      const exNum = (users[0] && users[0].phone) || formatPhone('99112233');
+      const g202Cmds = [
+        { title: '1. Нууц үг солих', cmd: `${p}#PWD6666#PWD6666#`, desc: 'Нууц үгийг 6666 болгох жишээ' },
+        { title: '2. Зөвшөөрөгдсөн дугаар нэмэх', cmd: `${p}#TEL${exNum}#001#`, desc: '001 слот = админ (реле мэдэгдэл энэ дугаар руу очно)' },
+        { title: '3. Слот дахь дугаар шалгах', cmd: `${p}#TEL001?`, desc: '001 байршлын дугаарыг асуух' },
+        { title: '4. Дугаарыг слотоор устгах', cmd: `${p}#TEL#002#`, desc: '002 слотыг хоослох' },
+        { title: '5. Дугаарыг дугаараар нь устгах', cmd: `${p}#DEL${exNum}#`, desc: 'Слотыг мэдэхгүй үед (дугаарыг солино)' },
+        { title: '6. Бүх дугаарт нээлттэй болгох', cmd: `${p}#AA#`, desc: 'Хэн ч залгасан хаалга онгойно' },
+        { title: '7. Зөвхөн бүртгэлтэй дугаарт зөвшөөрөх', cmd: `${p}#AU#`, desc: 'Үйлдвэрийн тохиргоо (Caller-ID хамгаалалт)' },
+        { title: '8. Хандалтын горим шалгах', cmd: `${p}#AC?#`, desc: 'AA эсвэл AU горимын аль нь болохыг асуух' },
+        { title: '9. Реле залгаатай байх хугацаа (GOT)', cmd: `${p}#GOT${g202GotCode(settings.got)}#`, desc: `4 орон, 0.5 сек нэгжтэй (тохиргоо: ${settings.got}). 0000 = байнга залгаатай` },
+        { title: '10. Реле хугацааг шалгах', cmd: `${p}#GOT?`, desc: 'Одоогийн GOT утгыг асуух' },
+        { title: '11. Реле ажиллах үед SMS мэдэгдэл асаах', cmd: `${p}#R#`, desc: '001 слотын дугаар руу мэдэгдэл очно' },
+        { title: '12. Реле SMS мэдэгдлийг унтраах', cmd: `${p}#N#`, desc: 'Үйлдвэрийн тохиргоо (мэдэгдэлгүй)' },
+        { title: '13. SMS мэдэгдлийн тохиргоо шалгах', cmd: `${p}#M?`, desc: 'Мэдэгдэл ON/OFF эсэхийг асуух' },
+        { title: '14. SMS-ээр Реле ЗАЛГАХ (ON)', cmd: `${p}#ON#`, desc: 'Шууд хаалга онгойлгох команд' },
+        { title: '15. SMS-ээр Реле САЛГАХ (OFF)', cmd: `${p}#OFF#`, desc: 'Шууд реле салгах команд' },
+        { title: '16. GSM дохионы хүч шалгах', cmd: `${p}#CSQ?`, desc: '0-31; 12-оос дээш, болж өгвөл 16+ байх ёстой' },
+        { title: '17. IMEI код асуух', cmd: `${p}#IMEI?`, desc: 'Модулийн IMEI' },
+        { title: '18. Дижитал оролт (alarm) идэвхжүүлэх', cmd: `${p}#EA#`, desc: 'Alarm оролтыг асаах' },
+        { title: '19. Дижитал оролт (alarm) унтраах', cmd: `${p}#DA#`, desc: 'Үйлдвэрийн тохиргоо' },
+        { title: '20. Alarm оролтын тохиргоо шалгах', cmd: `${p}#AL?`, desc: 'Идэвхтэй эсэхийг асуух' },
+        { title: '21. Үйлдвэрийн тохиргоонд буцаах', cmd: `${p}#RESET#`, desc: 'Асааснаас хойш 3 минутын дотор илгээнэ' }
+      ];
+
+      const cmds = settings.fwType === 'g202' ? g202Cmds : [
         { id: 1, title: '1. Төхөөрөмж эхлүүлэх (SIM таниулах)', cmd: `${p}TEL${settings.sim}#`, desc: 'Хамгийн эхэнд заавал илгээнэ' },
         { id: 2, title: '2. Дотоод цаг тааруулах (Sync Clock)', cmd: `${p}T${curTime}#`, desc: 'Одоогийн цагаар тохируулах' },
         { id: 3, title: '3. Нууц үг солих', cmd: `${p}P6666`, desc: 'Нууц үгийг 6666 болгох жишээ' },
